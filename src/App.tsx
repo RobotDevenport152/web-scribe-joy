@@ -5,11 +5,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import CartDrawer from "@/components/cart/CartDrawer";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import ShopPage from "./pages/ShopPage.tsx";
 import ProductDetailPage from "./pages/ProductDetailPage.tsx";
 import TraceabilityPage from "./pages/TraceabilityPage.tsx";
+import CheckoutPage from "./pages/CheckoutPage.tsx";
+import OrderSuccessPage from "./pages/OrderSuccessPage.tsx";
 import '@/i18n';
 
 const queryClient = new QueryClient({
@@ -28,12 +31,15 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Navbar />
+        <CartDrawer />
         <main className="min-h-screen">
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/shop" element={<ShopPage />} />
             <Route path="/shop/:slug" element={<ProductDetailPage />} />
             <Route path="/trace/:batchCode" element={<TraceabilityPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/order-success" element={<OrderSuccessPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
