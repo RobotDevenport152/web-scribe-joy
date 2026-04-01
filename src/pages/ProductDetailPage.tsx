@@ -174,6 +174,10 @@ export default function ProductDetailPage() {
               {formatPrice(currentPrice, currency)}
             </p>
 
+            <div className="mt-3">
+              <LiveInventory productId={product.id} />
+            </div>
+
             <div className="gold-line w-12 my-6" />
 
             <p className="text-foreground/80 font-body leading-relaxed">
