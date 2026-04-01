@@ -317,6 +317,8 @@ export default function ProductDetailPage() {
             </table>
           </div>
         </div>
+        {/* CrossSell */}
+        <CrossSell categoryId={product.category} currentProductId={product.id} />
       </div>
 
       {/* Mobile Sticky Bar */}
