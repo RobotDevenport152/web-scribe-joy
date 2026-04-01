@@ -255,11 +255,16 @@ export default function ProductDetailPage() {
             <button
               onClick={handleAddToCart}
               disabled={product.stock_quantity !== null && product.stock_quantity <= 0}
-              className="mt-8 w-full py-3 bg-accent text-accent-foreground font-body font-medium rounded-sm hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-8 w-full py-4 bg-primary text-primary-foreground font-body text-sm tracking-widest uppercase hover:bg-pa-green-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {product.stock_quantity !== null && product.stock_quantity <= 0
-                ? (lang === 'zh' ? '已售罄' : 'Sold Out')
-                : (lang === 'zh' ? '加入购物车' : 'Add to Cart')}
+                ? (lang === 'zh' ? '已售罄' : 'SOLD OUT')
+                : (lang === 'zh' ? '加入购物车' : 'ADD TO CART')}
+            </button>
+            <button
+              className="w-full mt-2 py-4 border border-primary text-primary font-body text-sm tracking-widest uppercase hover:bg-pa-ivory-dk transition-colors"
+            >
+              {lang === 'zh' ? '立即购买' : 'BUY NOW'}
             </button>
 
             {/* Benefits */}
