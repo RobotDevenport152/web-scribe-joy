@@ -9,6 +9,9 @@ import { ShieldCheck, Feather, Droplets, Bug, Zap, ChevronLeft } from 'lucide-re
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProductTraceability } from '@/components/traceability/ProductTraceability';
 import { CertificationBadges } from '@/components/traceability/CertificationBadges';
+import { ProductJsonLd } from '@/components/storefront/ProductJsonLd';
+import { CrossSell } from '@/components/storefront/CrossSell';
+import { LiveInventory } from '@/components/storefront/LiveInventory';
 import { toast } from 'sonner';
 
 const BENEFITS = [
