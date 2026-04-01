@@ -57,24 +57,25 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        gold: {
-          DEFAULT: "hsl(var(--gold))",
-          light: "hsl(var(--gold-light))",
-          dark: "hsl(var(--gold-dark))",
+        'pa-ivory': '#F5F0E6',
+        'pa-ivory-dk': '#EDE7D6',
+        'pa-cream': '#FAF7F2',
+        'pa-green': {
+          DEFAULT: '#1C3929',
+          md: '#2C5240',
+          lt: '#3D6B56',
         },
-        cream: {
-          DEFAULT: "hsl(var(--cream))",
-          dark: "hsl(var(--cream-dark))",
+        'pa-gold': {
+          DEFAULT: '#B8894A',
+          lt: '#D4AA72',
+          pale: '#F0E4CB',
         },
-        stone: {
-          DEFAULT: "hsl(var(--stone))",
-          light: "hsl(var(--stone-light))",
-        },
-        espresso: "hsl(var(--espresso))",
+        'pa-charcoal': '#2A2720',
+        'pa-warm-gray': '#7A7268',
       },
       fontFamily: {
-        display: ['"Playfair Display"', '"Noto Serif SC"', 'serif'],
-        body: ['Inter', '"Noto Serif SC"', 'system-ui', 'sans-serif'],
+        display: ['"Cormorant Garamond"', '"Noto Serif SC"', 'serif'],
+        body: ['Jost', '"Noto Serif SC"', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         lg: "var(--radius)",
