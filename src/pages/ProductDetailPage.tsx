@@ -118,7 +118,7 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-background pt-20">
-      <ProductJsonLd product={product} />
+      <ProductJsonLd product={{ ...product, images: images as any }} />
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <Link to="/shop" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6 font-body">
