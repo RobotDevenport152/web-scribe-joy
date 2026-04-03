@@ -1,83 +1,72 @@
+import React, { Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
-import CartDrawer from "@/components/cart/CartDrawer";
-import ChatWidget from "@/components/chat/ChatWidget";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
-import ShopPage from "./pages/ShopPage.tsx";
-import ProductDetailPage from "./pages/ProductDetailPage.tsx";
-import TraceabilityPage from "./pages/TraceabilityPage.tsx";
-import CheckoutPage from "./pages/CheckoutPage.tsx";
-import OrderSuccessPage from "./pages/OrderSuccessPage.tsx";
-import AuthPage from "./pages/AuthPage.tsx";
-import GrowerDashboard from "./pages/GrowerDashboard.tsx";
-import AdminLayout from "./pages/admin/AdminLayout.tsx";
-import AdminDashboard from "./pages/admin/AdminDashboard.tsx";
-import AdminProducts from "./pages/admin/AdminProducts.tsx";
-import AdminOrders from "./pages/admin/AdminOrders.tsx";
-import AdminGrowers from "./pages/admin/AdminGrowers.tsx";
-import AdminFiberBatches from "./pages/admin/AdminFiberBatches.tsx";
-import AdminPromos from "./pages/admin/AdminPromos.tsx";
-import '@/i18n';
+import { AppProvider } from "@/contexts/AppContext";
+import Index from "./pages/Index";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,
-      gcTime: 30 * 60 * 1000,
-    },
-  },
-});
+const Shop = React.lazy(() => import("./pages/Shop"));
+const ProductDetail = React.lazy(() => import("./pages/ProductDetail"));
+const Checkout = React.lazy(() => import("./pages/Checkout"));
+const OrderSuccess = React.lazy(() => import("./pages/OrderSuccess"));
+const Traceability = React.lazy(() => import("./pages/Traceability"));
+const Admin = React.lazy(() => import("./pages/Admin"));
+const Contact = React.lazy(() => import("./pages/Contact"));
+const GrowersInfo = React.lazy(() => import("./pages/GrowersInfo"));
+const Wholesale = React.lazy(() => import("./pages/Wholesale"));
+const ChinaLanding = React.lazy(() => import("./pages/ChinaLanding"));
+const Login = React.lazy(() => import("./pages/Login"));
+const Register = React.lazy(() => import("./pages/Register"));
+const ForgotPassword = React.lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = React.lazy(() => import("./pages/ResetPassword"));
+const MyOrders = React.lazy(() => import("./pages/MyOrders"));
+const NotFound = React.lazy(() => import("./pages/NotFound"));
+
+const queryClient = new QueryClient();
+
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center">
+        <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="font-body text-sm text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <ErrorBoundary>
-          <Routes>
-            {/* Admin routes (own layout, no Navbar/Footer) */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="products" element={<AdminProducts />} />
-              <Route path="orders" element={<AdminOrders />} />
-              <Route path="growers" element={<AdminGrowers />} />
-              <Route path="fiber-batches" element={<AdminFiberBatches />} />
-              <Route path="promos" element={<AdminPromos />} />
-            </Route>
-
-            {/* Public routes with Navbar/Footer */}
-            <Route path="*" element={
-              <>
-                <Navbar />
-                <CartDrawer />
-                <main className="min-h-screen">
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/shop" element={<ShopPage />} />
-                    <Route path="/shop/:slug" element={<ProductDetailPage />} />
-                    <Route path="/trace/:batchCode" element={<TraceabilityPage />} />
-                    <Route path="/checkout" element={<CheckoutPage />} />
-                    <Route path="/order-success" element={<OrderSuccessPage />} />
-                    <Route path="/login" element={<AuthPage />} />
-                    <Route path="/grower" element={<GrowerDashboard />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </main>
-                <Footer />
-                <ChatWidget />
-              </>
-            } />
-          </Routes>
-        </ErrorBoundary>
-      </BrowserRouter>
+      <AppProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/order-success" element={<OrderSuccess />} />
+              <Route path="/traceability" element={<Traceability />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/growers-info" element={<GrowersInfo />} />
+              <Route path="/wholesale" element={<Wholesale />} />
+              <Route path="/china" element={<ChinaLanding />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/my-orders" element={<MyOrders />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </AppProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

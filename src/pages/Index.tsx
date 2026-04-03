@@ -1,33 +1,20 @@
-import HeroSection from '@/components/home/HeroSection';
-import AuthorityBanner from '@/components/home/AuthorityBanner';
-import BrandHeritageSection from '@/components/home/BrandHeritageSection';
-import SleepScienceSection from '@/components/home/SleepScienceSection';
-import FiberSection from '@/components/home/FiberSection';
-import ProcessSection from '@/components/home/ProcessSection';
-import GrowerNetworkSection from '@/components/home/GrowerNetworkSection';
-import MediaCoverageSection from '@/components/home/MediaCoverageSection';
-import CertificationsSection from '@/components/home/CertificationsSection';
+import Navbar from '@/components/Navbar';
+import HeroSection from '@/components/HeroSection';
+import CartDrawer from '@/components/CartDrawer';
+import SEOHead from '@/components/SEOHead';
+import { useApp } from '@/contexts/AppContext';
 
-const Index = () => {
+export default function Index() {
+  const { locale } = useApp();
   return (
-    <>
+    <div className="min-h-screen">
+      <SEOHead
+        title={locale === 'zh' ? '新西兰最大羊驼纤维品牌' : 'New Zealand Premium Alpaca Fiber Brand'}
+        description={locale === 'zh' ? '太平洋羊驼 — 自2001年起，专注奢华羊驼纤维寝具，800+合作牧场，全球深睡新标准。' : 'Pacific Alpacas — Since 2001, luxury alpaca fiber bedding from 800+ partner farms. The new standard of deep sleep.'}
+      />
+      <Navbar />
+      <CartDrawer />
       <HeroSection />
-      <AuthorityBanner />
-      <section id="about">
-        <BrandHeritageSection />
-      </section>
-      <SleepScienceSection />
-      <section id="fiber">
-        <FiberSection />
-      </section>
-      <ProcessSection />
-      <GrowerNetworkSection />
-      <MediaCoverageSection />
-      <section id="certifications">
-        <CertificationsSection />
-      </section>
-    </>
+    </div>
   );
-};
-
-export default Index;
+}
