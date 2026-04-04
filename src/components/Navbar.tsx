@@ -46,6 +46,7 @@ export default function Navbar() {
           PACIFIC ALPACAS
         </Link>
 
+        {/* Desktop nav */}
         <div className="hidden lg:flex items-center gap-8">
           {navLinks.map(link => (
             link.href.startsWith('#') || link.href.startsWith('/#') ? (
@@ -65,6 +66,7 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* China flag link */}
           <Link to="/china" className="hidden lg:block text-lg hover:opacity-80 transition-opacity" title="中国专区">
             🇨🇳
           </Link>
@@ -87,6 +89,7 @@ export default function Navbar() {
             {locale === 'en' ? '中文' : 'EN'}
           </button>
 
+          {/* User menu */}
           <Link to="/login" className="hidden lg:flex text-primary-foreground/80 hover:text-primary-foreground transition-colors" title={locale === 'zh' ? '登录/注册' : 'Login'}>
             <User className="w-5 h-5" />
           </Link>

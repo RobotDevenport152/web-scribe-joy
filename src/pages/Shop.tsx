@@ -95,6 +95,37 @@ export default function ShopPage() {
             <h1 className="font-display text-4xl md:text-5xl mt-4">{t.products.title}</h1>
           </div>
 
+          {/* Gift Recommendation Banner */}
+          <div className="mb-8 bg-gold/5 border border-gold/20 rounded-lg p-5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <p className="font-display text-lg font-semibold">{locale === 'zh' ? '🎁 为亲友挑选礼物？' : '🎁 Shopping for a gift?'}</p>
+                <p className="text-xs text-muted-foreground font-body mt-0.5">
+                  {locale === 'zh' ? '礼品购买客单价通常更高，退货率更低。我们来帮你选。' : 'Let us help you find the perfect gift.'}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {([
+                  { labelZh: '送父母长辈', labelEn: 'For Parents', cat: 'duvet-premium' },
+                  { labelZh: '送伴侣', labelEn: 'For Partner', cat: 'duvet-luxury' },
+                  { labelZh: '送商务客户', labelEn: 'For Clients', cat: 'duvet-classic' },
+                  { labelZh: '送新生儿家庭', labelEn: 'For Newborn', cat: 'duvet-newborn' },
+                ] as const).map(opt => (
+                  <Link
+                    key={opt.cat}
+                    to={`/product/${opt.cat}`}
+                    className="px-3 py-1.5 bg-background border border-border rounded-sm text-xs font-body hover:border-gold hover:text-gold transition-colors whitespace-nowrap"
+                  >
+                    {locale === 'zh' ? opt.labelZh : opt.labelEn}
+                  </Link>
+                ))}
+              </div>
+              <Link to="/compare" className="text-xs font-body text-gold hover:underline whitespace-nowrap flex-shrink-0">
+                {locale === 'zh' ? '查看系列对比 →' : 'Compare tiers →'}
+              </Link>
+            </div>
+          </div>
+
           <div className="flex flex-col md:flex-row gap-4 mb-10">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

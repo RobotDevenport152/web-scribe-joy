@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { type Locale, translations } from '@/lib/i18n';
+import { type Locale, translations, type TranslationKey } from '@/lib/i18n';
 import { type Currency, type CartItem, type Product, PROMO_CODES, formatPrice } from '@/lib/store';
 
 interface AppContextType {

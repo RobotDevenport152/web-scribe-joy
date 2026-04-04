@@ -104,10 +104,22 @@
   }
 }
 
+/* iOS safe area utilities */
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+  .pb-safe {
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Smooth scrolling */
 html {
   scroll-behavior: smooth;
 }
 
+/* Luxury scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
 }

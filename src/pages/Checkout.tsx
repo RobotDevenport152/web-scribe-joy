@@ -21,6 +21,8 @@ export default function CheckoutPage() {
     name: '', email: '', phone: '',
     province: '', city: '', district: '', address: '',
     paymentMethod: 'stripe',
+    isGift: false,
+    giftMessage: '',
   });
 
   const shipping = cartTotal >= 500 ? 0 : 25;
@@ -32,13 +34,13 @@ export default function CheckoutPage() {
     { key: 'confirm', labelZh: '确认', labelEn: 'Confirm' },
   ];
 
-  const handleField = (field: string, value: string) => {
+  const handleField = (field: string, value: string | boolean) => {
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSubmitOrder = async () => {
     if (!user) {
-      toast.error(locale === 'zh' ? '请先登录' : 'Please log in first');
+      toast.error(locale === 'zh' ? '请先登录后再提交订单' : 'Please log in to place an order');
       navigate('/login');
       return;
     }
@@ -47,7 +49,6 @@ export default function CheckoutPage() {
 
     try {
       if (form.paymentMethod === 'stripe') {
-        // Use Stripe checkout
         const { data, error } = await supabase.functions.invoke('create-checkout', {
           body: {
             items: cart.map(item => ({
@@ -79,7 +80,6 @@ export default function CheckoutPage() {
         }
         throw new Error('No checkout URL returned');
       } else {
-        // For WeChat/Alipay — create order and show success (placeholder)
         const orderNumber = `PA-${new Date().getFullYear()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
         toast.success(locale === 'zh' ? '订单已提交！' : 'Order submitted!');
         navigate(`/order-success?number=${orderNumber}`);
@@ -91,19 +91,6 @@ export default function CheckoutPage() {
       setSubmitting(false);
     }
   };
-
-  if (!authLoading && !user) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="pt-32 text-center">
-          <Lock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h1 className="font-display text-2xl mb-4">{locale === 'zh' ? '请先登录' : 'Please log in to checkout'}</h1>
-          <Link to="/login" className="text-gold hover:underline font-body">{locale === 'zh' ? '去登录' : 'Log In'}</Link>
-        </div>
-      </div>
-    );
-  }
 
   if (cart.length === 0) {
     return (
@@ -123,6 +110,19 @@ export default function CheckoutPage() {
       <div className="pt-24 pb-16">
         <div className="container mx-auto px-6 max-w-5xl">
           <h1 className="font-display text-3xl text-center mb-8">{t.checkout.title}</h1>
+
+          {/* Login prompt banner */}
+          {!authLoading && !user && (
+            <div className="mb-6 bg-gold/10 border border-gold/20 rounded-lg p-4 text-center">
+              <p className="font-body text-sm text-muted-foreground">
+                {locale === 'zh' ? '提交订单前请先' : 'Please '}
+                <Link to="/login" className="text-gold hover:underline font-semibold">
+                  {locale === 'zh' ? '登录' : 'log in'}
+                </Link>
+                {locale === 'zh' ? '您的账户，以便追踪订单。' : ' to track your orders.'}
+              </p>
+            </div>
+          )}
 
           {/* Step Bar */}
           <div className="flex items-center justify-center gap-4 mb-10">
@@ -161,6 +161,39 @@ export default function CheckoutPage() {
                       />
                     </div>
                   ))}
+                  {/* Gift Mode */}
+                  <div className="border border-border rounded-sm p-4 space-y-3">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.isGift}
+                        onChange={e => handleField('isGift', e.target.checked)}
+                        className="mt-0.5 w-4 h-4 flex-shrink-0"
+                      />
+                      <span className="font-body text-sm">
+                        {locale === 'zh'
+                          ? '🎁 礼品模式：不在包裹内附含价格信息，并提供礼品包装（+NZD$15）'
+                          : '🎁 Gift mode: No price info in package, add gift wrapping (+NZD$15)'}
+                      </span>
+                    </label>
+                    {form.isGift && (
+                      <div>
+                        <label className="block text-xs font-body text-muted-foreground mb-1">
+                          {locale === 'zh' ? '礼品留言（将打印在精美卡片上随产品寄出）' : 'Gift message (printed on a card included with the order)'}
+                        </label>
+                        <textarea
+                          value={form.giftMessage}
+                          onChange={e => handleField('giftMessage', e.target.value)}
+                          maxLength={100}
+                          rows={3}
+                          placeholder={locale === 'zh' ? '写下您的祝福语，最多100字…' : 'Your message, up to 100 characters…'}
+                          className="w-full px-3 py-2 border border-border rounded-sm bg-background text-foreground font-body text-sm resize-none focus:outline-none focus:border-gold transition-colors"
+                        />
+                        <p className="text-xs text-muted-foreground font-body text-right mt-0.5">{form.giftMessage.length}/100</p>
+                      </div>
+                    )}
+                  </div>
+
                   <button
                     onClick={() => {
                       if (!form.name || !form.email || !form.phone) {
@@ -217,6 +250,13 @@ export default function CheckoutPage() {
                     <p><span className="text-muted-foreground">{locale === 'zh' ? '支付方式：' : 'Payment: '}</span>
                       {form.paymentMethod === 'stripe' ? t.checkout.stripe : form.paymentMethod === 'wechat' ? t.checkout.wechat : t.checkout.alipay}
                     </p>
+                    {form.isGift && (
+                      <p className="text-gold">
+                        <span className="text-muted-foreground">{locale === 'zh' ? '礼品包装：' : 'Gift wrapping: '}</span>
+                        {locale === 'zh' ? '是（不含价格信息）' : 'Yes (no price included)'}
+                        {form.giftMessage && <span className="block text-muted-foreground">"{form.giftMessage}"</span>}
+                      </p>
+                    )}
                   </div>
                   {cart.map(item => (
                     <div key={item.product.id} className="flex items-center gap-3 bg-card p-3 rounded-sm border border-border">
