@@ -90,6 +90,7 @@ export function SleepQuizDialog({ open, onOpenChange }: Props) {
         {!done ? (
           <AnimatePresence mode="wait">
             <motion.div key={step} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
+              {/* Progress */}
               <div className="flex gap-1 mb-4">
                 {STEPS.map((_, i) => (
                   <div key={i} className={`h-1 flex-1 rounded-full ${i <= step ? 'bg-accent' : 'bg-muted'}`} />

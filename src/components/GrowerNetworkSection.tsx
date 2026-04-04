@@ -38,18 +38,23 @@ export default function GrowerNetworkSection() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* NZ Map SVG */}
           <div className="flex justify-center">
             <svg viewBox="0 0 200 450" className="w-48 md:w-64 h-auto">
+              {/* North Island */}
               <path
                 d="M100,10 Q130,20 135,50 Q140,80 130,100 Q145,110 150,130 Q145,160 130,170 Q120,190 110,200 Q100,195 95,180 Q85,160 90,140 Q80,120 85,100 Q80,80 85,60 Q90,40 100,10Z"
                 fill="none" stroke="hsl(var(--gold))" strokeWidth="1" opacity="0.4"
               />
+              {/* South Island */}
               <path
                 d="M95,230 Q115,225 120,240 Q125,260 115,280 Q120,300 110,320 Q115,340 105,360 Q100,380 85,400 Q70,420 65,410 Q55,390 60,370 Q50,350 60,330 Q55,310 65,290 Q60,270 70,255 Q80,240 95,230Z"
                 fill="none" stroke="hsl(var(--gold))" strokeWidth="1" opacity="0.4"
               />
+              {/* Stewart Island */}
               <path d="M70,425 Q80,420 85,430 Q80,440 70,435Z" fill="none" stroke="hsl(var(--gold))" strokeWidth="0.5" opacity="0.3" />
 
+              {/* Region labels */}
               {[
                 { x: 118, y: 14, label: 'Northland' },
                 { x: 120, y: 94, label: 'Waikato' },
@@ -62,6 +67,7 @@ export default function GrowerNetworkSection() {
                 <text key={label} x={x + 10} y={y} fill="hsl(var(--gold))" fontSize="5" opacity="0.5" fontFamily="Inter">{label}</text>
               ))}
 
+              {/* Farm dots */}
               {GROWER_DOTS.map((dot, idx) => (
                 <motion.circle
                   key={idx}
@@ -77,6 +83,7 @@ export default function GrowerNetworkSection() {
             </svg>
           </div>
 
+          {/* Stats & CTA */}
           <div>
             <div className="grid grid-cols-2 gap-6 mb-8">
               {[

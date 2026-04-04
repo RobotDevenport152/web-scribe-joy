@@ -1,7 +1,10 @@
 import { useApp } from '@/contexts/AppContext';
-import { X, Plus, Minus, Tag } from 'lucide-react';
+import { X, Plus, Minus, Tag, Truck } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { type Currency } from '@/lib/store';
+
+const FREE_SHIPPING_THRESHOLD: Record<Currency, number> = { NZD: 500, CNY: 2250, USD: 300 };
 
 export default function CartDrawer() {
   const { cart, cartOpen, setCartOpen, removeFromCart, updateQuantity, cartTotal, promoDiscount, applyPromo, promoCode, fp, t, locale, currency } = useApp();
@@ -27,6 +30,33 @@ export default function CartDrawer() {
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Shipping progress bar */}
+        {(() => {
+          const threshold = FREE_SHIPPING_THRESHOLD[currency];
+          const remaining = threshold - cartTotal;
+          const progress = Math.min(100, (cartTotal / threshold) * 100);
+          return (
+            <div className="px-6 py-3 bg-muted/50 border-b border-border">
+              {remaining <= 0 ? (
+                <p className="text-xs font-body text-green-700 flex items-center justify-center gap-1.5">
+                  <Truck className="w-3.5 h-3.5" />
+                  {locale === 'zh' ? '🎉 已享免运费！' : '🎉 Free shipping applied!'}
+                </p>
+              ) : (
+                <>
+                  <div className="flex justify-between text-xs font-body text-muted-foreground mb-1.5">
+                    <span className="flex items-center gap-1"><Truck className="w-3 h-3" />{locale === 'zh' ? `再消费 ${fp(remaining)} 享免运费` : `${fp(remaining)} more for free shipping`}</span>
+                    <span>{Math.round(progress)}%</span>
+                  </div>
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-gold rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })()}
 
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {cart.length === 0 ? (
@@ -65,7 +95,8 @@ export default function CartDrawer() {
         </div>
 
         {cart.length > 0 && (
-          <div className="border-t border-border p-6 space-y-4">
+          <div className="border-t border-border p-6 pb-safe space-y-4">
+            {/* Promo code */}
             {!promoCode ? (
               <div className="flex gap-2">
                 <div className="flex-1 relative">
@@ -86,9 +117,13 @@ export default function CartDrawer() {
             ) : (
               <div className="flex items-center justify-between text-sm font-body">
                 <span className="text-gold">✓ {promoCode}</span>
+                <button onClick={() => { /* reset promo */ }} className="text-xs text-muted-foreground underline">{locale === 'zh' ? '移除' : 'Remove'}</button>
               </div>
             )}
             {promoError && <p className="text-xs text-destructive font-body">{promoError}</p>}
+            {promoCode && promoDiscount > 0 && !promoError && (
+              <p className="text-xs text-gold font-body">🎉 -{fp(promoDiscount)}</p>
+            )}
 
             <div className="space-y-1 text-sm font-body">
               <div className="flex justify-between"><span>{t.cart.subtotal}</span><span>{fp(cartTotal)}</span></div>

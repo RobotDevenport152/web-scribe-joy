@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
-import { products } from '@/lib/store';
+import { useProduct } from '@/hooks/useProducts';
 import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
 import Footer from '@/components/Footer';
-import { ShieldCheck, Feather, Droplets, Bug, Zap, ChevronLeft } from 'lucide-react';
+import { ShieldCheck, Feather, Droplets, Bug, Zap, ChevronLeft, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -26,19 +26,24 @@ const COMPARISON = [
   { key: '抗静电', keyEn: 'Anti-static', alpaca: '★★★★★', wool: '★☆☆☆☆', silk: '★★★☆☆' },
 ];
 
-// Mock fiber_batch_id mapping
-const BATCH_MAP: Record<string, string> = {
-  'duvet-classic': 'PA-2025-001',
-  'duvet-luxury': 'PA-2025-002',
-  'duvet-premium': 'PA-2025-003',
-};
-
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { locale, fp, currency, addToCart, t } = useApp();
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+  const [careOpen, setCareOpen] = useState(false);
+  const { data: product, isLoading } = useProduct(id || '');
 
-  const product = products.find(p => p.id === id);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-32 text-center">
+          <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        </div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -54,8 +59,6 @@ export default function ProductDetailPage() {
     );
   }
 
-  const batchId = BATCH_MAP[product.id];
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
@@ -70,8 +73,16 @@ export default function ProductDetailPage() {
 
           <div className="grid lg:grid-cols-2 gap-12">
             <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-              <div className="aspect-square rounded-lg overflow-hidden bg-card">
+              <div className="relative aspect-square rounded-lg overflow-hidden bg-card">
                 <img src={product.image} alt={locale === 'zh' ? product.nameZh : product.nameEn} className="w-full h-full object-cover" />
+                <Link
+                  to="/traceability"
+                  className="absolute bottom-3 left-3 flex items-center gap-1.5 bg-primary/80 backdrop-blur-sm text-primary-foreground text-xs font-body px-3 py-1.5 rounded-full hover:bg-primary transition-colors"
+                >
+                  <MapPin className="w-3 h-3 text-gold" />
+                  {locale === 'zh' ? '可溯源至新西兰牧场' : 'Traceable NZ Farm'}
+                  <span className="text-gold ml-0.5">→</span>
+                </Link>
               </div>
             </motion.div>
 
@@ -90,7 +101,34 @@ export default function ProductDetailPage() {
 
               {product.variants && product.variants.length > 0 && (
                 <div className="mb-6">
-                  <p className="text-xs font-body text-muted-foreground mb-2">{locale === 'zh' ? '选择尺寸' : 'Select Size'}</p>
+                  <div className="flex items-center gap-3 mb-2">
+                    <p className="text-xs font-body text-muted-foreground">{locale === 'zh' ? '选择尺寸' : 'Select Size'}</p>
+                    <button
+                      onClick={() => setSizeGuideOpen(v => !v)}
+                      className="text-xs font-body text-gold hover:underline flex items-center gap-0.5"
+                    >
+                      {locale === 'zh' ? '尺寸参考' : 'Size Guide'}
+                      {sizeGuideOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </button>
+                  </div>
+                  {sizeGuideOpen && (
+                    <div className="mb-3 bg-muted rounded-sm p-3 text-xs font-body space-y-1.5 border border-border">
+                      <p className="font-semibold text-foreground mb-2">{locale === 'zh' ? '中国床尺寸对照' : 'Bed Size Reference'}</p>
+                      {[
+                        { bed: locale === 'zh' ? '标准双人床（1.5m）' : 'Double (1.5m)', rec: '200×230cm' },
+                        { bed: locale === 'zh' ? '大双人床（1.8m）' : 'Queen/King (1.8m)', rec: '220×240cm' },
+                        { bed: locale === 'zh' ? '儿童床（0.9–1.2m）' : 'Single/Child', rec: '150×180cm' },
+                      ].map(r => (
+                        <div key={r.bed} className="flex justify-between items-center">
+                          <span className="text-muted-foreground">{r.bed}</span>
+                          <span className="font-semibold text-foreground">{locale === 'zh' ? '推荐' : 'Rec.'} {r.rec}</span>
+                        </div>
+                      ))}
+                      <p className="text-muted-foreground/70 pt-1 border-t border-border">
+                        {locale === 'zh' ? '建议比床宽各多出 30cm 以上，以获得最佳包裹感。' : 'Choose 30cm+ wider than your bed for best coverage.'}
+                      </p>
+                    </div>
+                  )}
                   <div className="flex gap-2 flex-wrap">
                     {product.variants.map(v => (
                       <button
@@ -109,9 +147,39 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              <p className="text-xs text-muted-foreground font-body mb-4">
+              <p className="text-xs text-muted-foreground font-body mb-2">
                 {locale === 'zh' ? `库存: ${product.stock} 件` : `Stock: ${product.stock} units`}
               </p>
+
+              {/* Care Instructions */}
+              <div className="mb-4 border border-border rounded-sm overflow-hidden">
+                <button
+                  onClick={() => setCareOpen(v => !v)}
+                  className="w-full flex items-center justify-between px-4 py-3 text-sm font-body font-semibold hover:bg-muted transition-colors"
+                >
+                  <span>{locale === 'zh' ? '🧺 护理说明' : '🧺 Care Instructions'}</span>
+                  {careOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                </button>
+                {careOpen && (
+                  <div className="px-4 pb-4 space-y-1.5 text-xs font-body text-muted-foreground border-t border-border pt-3">
+                    {(locale === 'zh' ? [
+                      '手洗或洗衣机轻柔模式，30°C 以下冷水',
+                      '使用羊毛专用洗涤剂，避免含酶洗涤剂',
+                      '平铺晾干，避免直接暴晒',
+                      '储存时置于透气袋中，放置樟脑球可防蛀',
+                      '切勿干洗（化学溶剂会破坏羊驼纤维蛋白质结构）',
+                    ] : [
+                      'Hand wash or gentle machine cycle, cold water ≤30°C',
+                      'Use wool-specific detergent, avoid enzyme-based products',
+                      'Lay flat to dry, avoid direct sunlight',
+                      'Store in breathable bag with cedar balls to prevent moths',
+                      'Do not dry clean — solvents damage alpaca fiber proteins',
+                    ]).map((tip, i) => (
+                      <p key={i} className="flex gap-2"><span className="text-gold flex-shrink-0">·</span>{tip}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <button
                 onClick={() => { addToCart(product, selectedVariant || undefined); }}
@@ -121,32 +189,16 @@ export default function ProductDetailPage() {
                 {product.stock <= 0 ? (locale === 'zh' ? '已售罄' : 'Sold Out') : t.products.addToCart}
               </button>
 
-              {/* Verify Authenticity CTA (Task 1.2) */}
               <div className="mt-4">
-                {batchId ? (
-                  <Link
-                    to={`/traceability`}
-                    className="inline-flex items-center gap-2 px-4 py-2 border border-gold/40 text-gold-dark rounded-sm text-sm font-body hover:bg-gold/10 transition-colors"
-                  >
-                    <ShieldCheck className="w-4 h-4" />
-                    {locale === 'zh' ? '验证产品真实性' : 'Verify Product Authenticity'}
-                  </Link>
-                ) : (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex items-center gap-2 px-4 py-2 text-muted-foreground/50 text-sm font-body cursor-default">
-                        <ShieldCheck className="w-4 h-4" />
-                        {locale === 'zh' ? '验证产品真实性' : 'Verify Product Authenticity'}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {locale === 'zh' ? '溯源数据即将上线' : 'Traceability data coming soon'}
-                    </TooltipContent>
-                  </Tooltip>
-                )}
+                <Link
+                  to="/traceability"
+                  className="inline-flex items-center gap-2 px-4 py-2 border border-gold/40 text-gold-dark rounded-sm text-sm font-body hover:bg-gold/10 transition-colors"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  {locale === 'zh' ? '验证产品真实性' : 'Verify Product Authenticity'}
+                </Link>
               </div>
 
-              {/* Benefits */}
               <div className="grid grid-cols-5 gap-3 mt-8">
                 {BENEFITS.map((b) => (
                   <div key={b.labelEn} className="text-center">
@@ -161,7 +213,6 @@ export default function ProductDetailPage() {
             </motion.div>
           </div>
 
-          {/* Comparison Table */}
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="mt-16">
             <h2 className="font-display text-2xl text-center mb-6">
               {locale === 'zh' ? '被窝指标对比' : 'Duvet Comparison'}
@@ -190,7 +241,6 @@ export default function ProductDetailPage() {
             </div>
           </motion.div>
 
-          {/* Cloud of Dreams Story (Task 1.3) */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -212,8 +262,7 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      {/* Mobile Sticky Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 flex items-center gap-4 z-40">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border px-4 pt-4 safe-bottom flex items-center gap-4 z-40">
         <span className="text-gold font-display text-xl font-semibold">{fp(product.prices[currency])}</span>
         <button
           onClick={() => addToCart(product, selectedVariant || undefined)}

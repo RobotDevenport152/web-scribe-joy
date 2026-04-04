@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/contexts/AppContext";
 import Index from "./pages/Index";
 
+// Lazy-loaded routes for performance
 const Shop = React.lazy(() => import("./pages/Shop"));
 const ProductDetail = React.lazy(() => import("./pages/ProductDetail"));
 const Checkout = React.lazy(() => import("./pages/Checkout"));
@@ -22,6 +23,8 @@ const Register = React.lazy(() => import("./pages/Register"));
 const ForgotPassword = React.lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = React.lazy(() => import("./pages/ResetPassword"));
 const MyOrders = React.lazy(() => import("./pages/MyOrders"));
+const Compare = React.lazy(() => import("./pages/Compare"));
+const Returns = React.lazy(() => import("./pages/Returns"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -62,6 +65,8 @@ const App = () => (
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/my-orders" element={<MyOrders />} />
+              <Route path="/compare" element={<Compare />} />
+              <Route path="/returns" element={<Returns />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

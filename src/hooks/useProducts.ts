@@ -26,6 +26,7 @@ export interface DbProduct {
   certifications: string[] | null;
 }
 
+// Convert DB product to legacy Product format for compatibility
 export function dbToLegacyProduct(p: DbProduct) {
   return {
     id: p.id,
@@ -67,7 +68,7 @@ export function useProducts(category?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data as unknown as DbProduct[]).map(dbToLegacyProduct);
+      return (data as DbProduct[]).map(dbToLegacyProduct);
     },
   });
 }
@@ -82,7 +83,7 @@ export function useProduct(id: string) {
         .eq('id', id)
         .single();
       if (error) throw error;
-      return dbToLegacyProduct(data as unknown as DbProduct);
+      return dbToLegacyProduct(data as DbProduct);
     },
     enabled: !!id,
   });
@@ -99,7 +100,7 @@ export function useFeaturedProducts() {
         .eq('is_active', true)
         .limit(6);
       if (error) throw error;
-      return (data as unknown as DbProduct[]).map(dbToLegacyProduct);
+      return (data as DbProduct[]).map(dbToLegacyProduct);
     },
   });
 }

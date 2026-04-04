@@ -3,8 +3,9 @@ import { useApp } from '@/contexts/AppContext';
 import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
 import { motion } from 'framer-motion';
-import { MapPin, Calendar, Scissors, Droplets, Wind, Sparkles, ShieldCheck, Package, Search } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { MapPin, Calendar, Scissors, Droplets, Wind, Sparkles, ShieldCheck, Package, Search, Share2, Copy, Check } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const PROCESS_STEPS = [
   { icon: Scissors, labelZh: '剪获', labelEn: 'Shearing', descZh: '每年只剪一次，确保纤维最佳长度', descEn: 'Once a year for optimal fiber length' },
@@ -25,12 +26,34 @@ const STATUS_MAP: Record<string, number> = { raw: 0, scoured: 1, combed: 2, read
 
 export default function TraceabilityPage() {
   const { locale } = useApp();
-  const [searchCode, setSearchCode] = useState('');
-  const [selectedBatch, setSelectedBatch] = useState<typeof MOCK_BATCHES[0] | null>(null);
+  const [urlParams] = useSearchParams();
+  const initialCode = urlParams.get('code') || '';
+  const [searchCode, setSearchCode] = useState(initialCode);
+  const [selectedBatch, setSelectedBatch] = useState<typeof MOCK_BATCHES[0] | null>(
+    initialCode ? MOCK_BATCHES.find(b => b.code.toLowerCase() === initialCode.toLowerCase()) || null : null
+  );
+  const [copied, setCopied] = useState(false);
 
   const handleSearch = () => {
     const found = MOCK_BATCHES.find(b => b.code.toLowerCase() === searchCode.toLowerCase());
     setSelectedBatch(found || null);
+    if (!found) toast.error(locale === 'zh' ? '未找到该批次，请检查编号是否正确' : 'Batch not found. Please check the code.');
+  };
+
+  const handleShare = (batch: typeof MOCK_BATCHES[0]) => {
+    const shareText = locale === 'zh'
+      ? `我的太平洋羊驼被来自新西兰${batch.region}的 ${batch.farm}，这批纤维于${batch.date}剪获，微米数${batch.micron}μm，等级${batch.grade}。`
+      : `My Pacific Alpacas duvet comes from ${batch.farm} in ${batch.region}, NZ. Fiber sheared ${batch.date}, ${batch.micron}μm, Grade ${batch.grade}.`;
+    const url = `${window.location.origin}/traceability?code=${batch.code}`;
+    if (navigator.share) {
+      navigator.share({ title: 'Pacific Alpacas 溯源故事', text: shareText, url });
+    } else {
+      navigator.clipboard.writeText(`${shareText}\n${url}`).then(() => {
+        setCopied(true);
+        toast.success(locale === 'zh' ? '溯源链接已复制到剪贴板' : 'Trace link copied to clipboard');
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
   };
 
   return (
@@ -146,6 +169,24 @@ export default function TraceabilityPage() {
                 </div>
               </div>
             </motion.div>
+          )}
+
+          {/* Share button for selected batch */}
+          {selectedBatch && (
+            <div className="max-w-3xl mx-auto mb-8 text-center">
+              <p className="text-sm text-muted-foreground font-body mb-3">
+                {locale === 'zh' ? '分享您的溯源故事，每个分享都是对新西兰品质的真实背书。' : 'Share your trace story — every share is authentic advocacy for NZ quality.'}
+              </p>
+              <button
+                onClick={() => handleShare(selectedBatch)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 border border-gold/40 text-gold rounded-sm font-body text-sm hover:bg-gold/10 transition-colors"
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+                {copied
+                  ? (locale === 'zh' ? '已复制！' : 'Copied!')
+                  : (locale === 'zh' ? '分享我的溯源故事' : 'Share My Trace Story')}
+              </button>
+            </div>
           )}
 
           {/* All Batches */}
