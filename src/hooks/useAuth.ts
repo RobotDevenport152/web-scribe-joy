@@ -6,6 +6,7 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -25,9 +26,18 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+    supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' })
+      .then(({ data }) => setIsAdmin(!!data));
+  }, [user]);
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
 
-  return { user, session, loading, signOut };
+  return { user, session, loading, isAdmin, signOut };
 }
