@@ -1,33 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Tables } from '@/integrations/supabase/types';
 import type { Currency } from '@/lib/store';
 
-export interface DbProduct {
-  id: string;
-  slug: string;
-  name_en: string;
-  name_zh: string;
-  description_en: string | null;
-  description_zh: string | null;
-  category: string;
-  image: string | null;
-  images: string[] | null;
-  price_nzd: number;
-  price_cny: number;
-  price_usd: number;
-  variants: any;
-  stock: number;
-  rating: number | null;
-  review_count: number | null;
-  is_featured: boolean | null;
-  is_active: boolean | null;
-  weight: string | null;
-  fill_power: string | null;
-  certifications: string[] | null;
-}
+type DbProduct = Tables<'products'>;
 
 // Convert DB product to legacy Product format for compatibility
 export function dbToLegacyProduct(p: DbProduct) {
+  const images = Array.isArray(p.images) ? (p.images as string[]) : [];
   return {
     id: p.id,
     nameEn: p.name_en,
@@ -35,20 +15,24 @@ export function dbToLegacyProduct(p: DbProduct) {
     descEn: p.description_en || '',
     descZh: p.description_zh || '',
     category: p.category as any,
-    prices: { NZD: Number(p.price_nzd), CNY: Number(p.price_cny), USD: Number(p.price_usd) } as Record<Currency, number>,
-    image: p.image || '/placeholder.svg',
+    prices: {
+      NZD: Number(p.price_nzd),
+      CNY: Number(p.price_nzd) * 4.5,
+      USD: Number(p.price_nzd) * 0.6,
+    } as Record<Currency, number>,
+    image: images[0] || '/placeholder.svg',
     badge: p.is_featured ? 'Featured' : undefined,
-    variants: Array.isArray(p.variants)
-      ? p.variants.map((v: any) => ({ label: v.name || v.label, value: v.name || v.value }))
+    variants: Array.isArray(p.size_options)
+      ? (p.size_options as any[]).map((v: any) => ({ label: v.name || v.label || v, value: v.name || v.value || v }))
       : undefined,
-    stock: p.stock,
+    stock: p.stock_quantity ?? 0,
     featured: p.is_featured ?? false,
     slug: p.slug,
-    rating: Number(p.rating) || 0,
-    reviewCount: p.review_count || 0,
-    weight: p.weight,
-    fillPower: p.fill_power,
-    certifications: p.certifications || [],
+    rating: 0,
+    reviewCount: 0,
+    weight: p.weight_grams ? `${p.weight_grams}g` : null,
+    fillPower: p.fill_material || null,
+    certifications: Array.isArray(p.certifications) ? (p.certifications as string[]) : [],
   };
 }
 
@@ -68,7 +52,7 @@ export function useProducts(category?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data as DbProduct[]).map(dbToLegacyProduct);
+      return (data ?? []).map(dbToLegacyProduct);
     },
   });
 }
@@ -83,7 +67,7 @@ export function useProduct(id: string) {
         .eq('id', id)
         .single();
       if (error) throw error;
-      return dbToLegacyProduct(data as DbProduct);
+      return dbToLegacyProduct(data);
     },
     enabled: !!id,
   });
@@ -100,7 +84,7 @@ export function useFeaturedProducts() {
         .eq('is_active', true)
         .limit(6);
       if (error) throw error;
-      return (data as DbProduct[]).map(dbToLegacyProduct);
+      return (data ?? []).map(dbToLegacyProduct);
     },
   });
 }
