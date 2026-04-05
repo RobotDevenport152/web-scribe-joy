@@ -50,13 +50,13 @@ export default function TraceabilityPage() {
         if (data) {
           setSelectedBatch({
             code: data.batch_code,
-            farm: data.farm_name,
-            region: data.region,
-            date: data.shearing_date || data.created_at,
+            farm: data.region || 'N/A',
+            region: data.region || '',
+            date: data.harvest_date || data.created_at || '',
             weight: Number(data.weight_kg) || 0,
-            micron: Number(data.micron_measurement) || 0,
-            grade: data.fiber_grade || 'N/A',
-            status: data.status || 'raw',
+            micron: Number(data.micron_avg) || 0,
+            grade: data.grade || 'N/A',
+            status: data.processing_status || 'raw',
           });
         }
       })();
@@ -74,13 +74,13 @@ export default function TraceabilityPage() {
     if (data) {
       setSelectedBatch({
         code: data.batch_code,
-        farm: data.farm_name,
-        region: data.region,
-        date: data.shearing_date || data.created_at,
+        farm: data.region || 'N/A',
+        region: data.region || '',
+        date: data.harvest_date || data.created_at || '',
         weight: Number(data.weight_kg) || 0,
-        micron: Number(data.micron_measurement) || 0,
-        grade: data.fiber_grade || 'N/A',
-        status: data.status || 'raw',
+        micron: Number(data.micron_avg) || 0,
+        grade: data.grade || 'N/A',
+        status: data.processing_status || 'raw',
       });
     } else {
       setSelectedBatch(null);
