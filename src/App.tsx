@@ -94,11 +94,11 @@ const App = () => (
                 }
               />
 
-              {/* P1 FIX: Grower routes — require 'grower' role */}
+              {/* Grower routes — require authentication */}
               <Route
                 path="/grower/batches"
                 element={
-                  <ProtectedRoute requiredRole="grower">
+                  <ProtectedRoute>
                     <GrowerBatches />
                   </ProtectedRoute>
                 }
@@ -106,7 +106,7 @@ const App = () => (
               <Route
                 path="/grower/credits"
                 element={
-                  <ProtectedRoute requiredRole="grower">
+                  <ProtectedRoute>
                     <GrowerCredits />
                   </ProtectedRoute>
                 }
