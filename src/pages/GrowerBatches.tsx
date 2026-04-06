@@ -62,7 +62,7 @@ export default function GrowerBatchesPage() {
       const { data, error } = await supabase
         .from('fiber_batches')
         .select('*')
-        .eq('grower_user_id', user!.id)
+        .eq('grower_id', user!.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []).map((d: any) => ({
