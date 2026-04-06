@@ -42,21 +42,23 @@ export default function TraceabilityPage() {
   useEffect(() => {
     if (initialCode) {
       (async () => {
+        // Queries public_fiber_batches VIEW (not the base table)
+        // This view exposes only non-PII fields per the RLS migration.
         const { data } = await supabase
-          .from('fiber_batches')
+          .from('public_fiber_batches')
           .select('*')
           .ilike('batch_code', initialCode)
           .maybeSingle();
         if (data) {
           setSelectedBatch({
             code: data.batch_code,
-            farm: data.region || 'N/A',
-            region: data.region || '',
-            date: data.harvest_date || data.created_at || '',
+            farm: data.farm_name,
+            region: data.region,
+            date: data.shearing_date || data.created_at,
             weight: Number(data.weight_kg) || 0,
-            micron: Number(data.micron_avg) || 0,
-            grade: data.grade || 'N/A',
-            status: data.processing_status || 'raw',
+            micron: Number(data.micron_measurement) || 0,
+            grade: data.fiber_grade || 'N/A',
+            status: data.status || 'raw',
           });
         }
       })();
@@ -65,8 +67,10 @@ export default function TraceabilityPage() {
 
   const handleSearch = async () => {
     setSearching(true);
-    const { data } = await supabase
-      .from('fiber_batches')
+    // Queries public_fiber_batches VIEW (not the base table)
+        // This view exposes only non-PII fields per the RLS migration.
+        const { data } = await supabase
+      .from('public_fiber_batches')
       .select('*')
       .ilike('batch_code', searchCode.trim())
       .maybeSingle();
@@ -74,13 +78,13 @@ export default function TraceabilityPage() {
     if (data) {
       setSelectedBatch({
         code: data.batch_code,
-        farm: data.region || 'N/A',
-        region: data.region || '',
-        date: data.harvest_date || data.created_at || '',
+        farm: data.farm_name,
+        region: data.region,
+        date: data.shearing_date || data.created_at,
         weight: Number(data.weight_kg) || 0,
-        micron: Number(data.micron_avg) || 0,
-        grade: data.grade || 'N/A',
-        status: data.processing_status || 'raw',
+        micron: Number(data.micron_measurement) || 0,
+        grade: data.fiber_grade || 'N/A',
+        status: data.status || 'raw',
       });
     } else {
       setSelectedBatch(null);
