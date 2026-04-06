@@ -65,6 +65,10 @@ export default function ProductDetailPage() {
     );
   }
 
+  const images: string[] = (product as any)?.images?.length > 0
+    ? (product as any).images
+    : [product?.image || '/placeholder.svg'];
+
   if (!product) {
     return (
       <div className="min-h-screen bg-background">
