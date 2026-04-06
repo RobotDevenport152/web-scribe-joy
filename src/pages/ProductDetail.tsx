@@ -5,9 +5,12 @@ import { useProduct, useProducts } from '@/hooks/useProducts';
 import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
 import Footer from '@/components/Footer';
-import { ShieldCheck, Feather, Droplets, Bug, Zap, ChevronLeft, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
+import { ShieldCheck, Feather, Droplets, Bug, Zap, ChevronLeft, ChevronDown, ChevronUp, MapPin, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useWishlist } from '@/hooks/useWishlist';
+import { toast } from 'sonner';
+import StockNotifyForm from '@/components/StockNotifyForm';
 
 const BENEFITS = [
   { icon: ShieldCheck, labelZh: '保暖', labelEn: 'Warmth', descZh: '3倍于羊毛', descEn: '3× warmer than wool' },
@@ -35,6 +38,7 @@ const MOCK_REVIEWS = [
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { locale, fp, currency, addToCart, t, recentlyViewed, addRecentlyViewed } = useApp();
+  const { toggle: toggleWishlist, isWishlisted } = useWishlist();
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [careOpen, setCareOpen] = useState(false);
@@ -48,6 +52,8 @@ export default function ProductDetailPage() {
     }
   }, [product?.id]);
 
+  const [activeImg, setActiveImg] = useState(0);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -58,6 +64,10 @@ export default function ProductDetailPage() {
       </div>
     );
   }
+
+  const images: string[] = (product as any)?.images?.length > 0
+    ? (product as any).images
+    : [product?.image || '/placeholder.svg'];
 
   if (!product) {
     return (
@@ -122,8 +132,13 @@ export default function ProductDetailPage() {
 
           <div className="grid lg:grid-cols-2 gap-12">
             <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
+              {/* P1 FIX: Image gallery — uses products.images[] array from DB */}
               <div className="relative aspect-square rounded-lg overflow-hidden bg-card">
-                <img src={product.image} alt={locale === 'zh' ? product.nameZh : product.nameEn} className="w-full h-full object-cover" />
+                <img
+                  src={images[activeImg]}
+                  alt={locale === 'zh' ? product.nameZh : product.nameEn}
+                  className="w-full h-full object-cover transition-opacity duration-300"
+                />
                 <Link
                   to="/traceability"
                   className="absolute bottom-3 left-3 flex items-center gap-1.5 bg-primary/80 backdrop-blur-sm text-primary-foreground text-xs font-body px-3 py-1.5 rounded-full hover:bg-primary transition-colors"
@@ -133,6 +148,21 @@ export default function ProductDetailPage() {
                   <span className="text-gold ml-0.5">→</span>
                 </Link>
               </div>
+              {images.length > 1 && (
+                <div className="flex gap-2 mt-3">
+                  {images.map((img, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveImg(i)}
+                      className={`w-16 h-16 rounded-sm overflow-hidden border-2 transition-colors flex-shrink-0 ${
+                        activeImg === i ? 'border-gold' : 'border-transparent opacity-60 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </motion.div>
 
             <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="flex flex-col">
@@ -196,9 +226,14 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              <p className="text-xs text-muted-foreground font-body mb-2">
-                {locale === 'zh' ? `库存: ${product.stock} 件` : `Stock: ${product.stock} units`}
-              </p>
+              {/* P2 FIX: Threshold display instead of exact stock number */}
+              {product.stock > 0 && product.stock <= 10 && (
+                <p className="text-xs font-body mb-2 text-amber-600">
+                  {product.stock <= 4
+                    ? (locale === 'zh' ? `仅剩 ${product.stock} 件，手慢无` : `Only ${product.stock} left`)
+                    : (locale === 'zh' ? '仅剩少量' : 'Low stock')}
+                </p>
+              )}
 
               {/* Care Instructions */}
               <div className="mb-4 border border-border rounded-sm overflow-hidden">
@@ -218,13 +253,43 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              <button
-                onClick={() => { addToCart(product, selectedVariant || undefined); }}
-                disabled={product.stock <= 0}
-                className="w-full py-3 bg-accent text-accent-foreground font-body font-semibold rounded-sm tracking-wider hover:bg-accent/90 transition disabled:opacity-50"
-              >
-                {product.stock <= 0 ? (locale === 'zh' ? '已售罄' : 'Sold Out') : t.products.addToCart}
-              </button>
+              {/* P0 FIX: Variant required before add to cart */}
+              {product.stock <= 0 ? (
+                /* P1 FIX: Out-of-stock notify form replaces grey Sold Out button */
+                <StockNotifyForm productId={product.id} locale={locale as 'zh' | 'en'} />
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      if (product.variants && product.variants.length > 0 && !selectedVariant) {
+                        toast.error(locale === 'zh' ? '请先选择规格' : 'Please select a size first');
+                        return;
+                      }
+                      addToCart(product, selectedVariant || undefined);
+                    }}
+                    className="flex-1 py-3 bg-accent text-accent-foreground font-body font-semibold rounded-sm tracking-wider hover:bg-accent/90 transition"
+                  >
+                    {t.products.addToCart}
+                  </button>
+                  {/* P1 FIX: Wishlist heart button */}
+                  <button
+                    onClick={() => {
+                      toggleWishlist(product.id);
+                      toast.success(
+                        isWishlisted(product.id)
+                          ? (locale === 'zh' ? '已从收藏移除' : 'Removed from wishlist')
+                          : (locale === 'zh' ? '已加入收藏' : 'Added to wishlist'),
+                      );
+                    }}
+                    className="px-4 py-3 border border-border rounded-sm hover:border-gold transition-colors flex-shrink-0"
+                    aria-label={locale === 'zh' ? '收藏' : 'Wishlist'}
+                  >
+                    <Heart
+                      className={`w-5 h-5 transition-colors ${isWishlisted(product.id) ? 'fill-gold text-gold' : 'text-muted-foreground'}`}
+                    />
+                  </button>
+                </div>
+              )}
 
               <div className="mt-4">
                 <Link
@@ -470,13 +535,21 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
+      {/* P2 FIX: Mobile sticky add-to-cart bar with variant guard */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border px-4 pt-4 safe-bottom flex items-center gap-4 z-40">
         <span className="text-gold font-display text-xl font-semibold">{fp(product.prices[currency])}</span>
         <button
-          onClick={() => addToCart(product, selectedVariant || undefined)}
-          className="flex-1 py-3 bg-accent text-accent-foreground font-body font-semibold rounded-sm"
+          onClick={() => {
+            if (product.variants && product.variants.length > 0 && !selectedVariant) {
+              toast.error(locale === 'zh' ? '请先选择规格' : 'Please select a size');
+              return;
+            }
+            addToCart(product, selectedVariant || undefined);
+          }}
+          disabled={product.stock <= 0}
+          className="flex-1 py-3 bg-accent text-accent-foreground font-body font-semibold rounded-sm disabled:opacity-50"
         >
-          {t.products.addToCart}
+          {product.stock <= 0 ? (locale === 'zh' ? '已售罄' : 'Sold Out') : t.products.addToCart}
         </button>
       </div>
 

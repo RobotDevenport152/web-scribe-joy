@@ -8,6 +8,7 @@ type DbProduct = Tables<'products'>;
 // Convert DB product to legacy Product format for compatibility
 export function dbToLegacyProduct(p: DbProduct) {
   const images = Array.isArray(p.images) ? (p.images as string[]) : [];
+  const nzd = Number(p.price_nzd);
   return {
     id: p.id,
     nameEn: p.name_en,
@@ -16,11 +17,12 @@ export function dbToLegacyProduct(p: DbProduct) {
     descZh: p.description_zh || '',
     category: p.category as any,
     prices: {
-      NZD: Number(p.price_nzd),
-      CNY: Number(p.price_nzd) * 4.5,
-      USD: Number(p.price_nzd) * 0.6,
+      NZD: nzd,
+      CNY: Math.round(nzd * 4.5),
+      USD: Math.round(nzd * 0.6),
     } as Record<Currency, number>,
     image: images[0] || '/placeholder.svg',
+    images: images,
     badge: p.is_featured ? 'Featured' : undefined,
     variants: Array.isArray(p.size_options)
       ? (p.size_options as any[]).map((v: any) => ({ label: v.name || v.label || v, value: v.name || v.value || v }))
@@ -61,13 +63,24 @@ export function useProduct(id: string) {
   return useQuery({
     queryKey: ['product', id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Try by UUID first, then by slug
+      let result = await supabase
         .from('products')
         .select('*')
         .eq('id', id)
-        .single();
-      if (error) throw error;
-      return dbToLegacyProduct(data);
+        .maybeSingle();
+
+      if (!result.data) {
+        result = await supabase
+          .from('products')
+          .select('*')
+          .eq('slug', id)
+          .maybeSingle();
+      }
+
+      if (result.error) throw result.error;
+      if (!result.data) throw new Error('Product not found');
+      return dbToLegacyProduct(result.data);
     },
     enabled: !!id,
   });
