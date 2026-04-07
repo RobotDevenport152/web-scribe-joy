@@ -38,9 +38,8 @@ const AdminProducts = () => {
   const openNew = () => {
     setEditing({
       name_zh: '', name_en: '', slug: '', category: 'duvet', tier: 'classic',
-      description_zh: '', description_en: '', price_nzd: 0, stock_quantity: 0,
-      fill_material: '', fabric_material: '', fiber_batch_id: null,
-      is_active: true, is_featured: false, sort_order: 0,
+      description_zh: '', description_en: '', price_nzd: 0, stock: 0,
+      fill_material: '', fabric_material: '', is_active: true, is_featured: false, sort_order: 0,
     });
     setFormOpen(true);
   };
@@ -108,7 +107,7 @@ const AdminProducts = () => {
                   <TableCell>{p.name_zh}</TableCell>
                   <TableCell><Badge variant="secondary">{p.category}</Badge></TableCell>
                   <TableCell>NZ${Number(p.price_nzd).toFixed(0)}</TableCell>
-                  <TableCell className={p.stock_quantity < 5 ? 'text-destructive font-bold' : ''}>{p.stock_quantity}</TableCell>
+                  <TableCell className={p.stock < 5 ? 'text-destructive font-bold' : ''}>{p.stock}</TableCell>
                   <TableCell><Badge variant={p.is_active ? 'default' : 'outline'}>{p.is_active ? '上架' : '下架'}</Badge></TableCell>
                   <TableCell><Button variant="ghost" size="sm" onClick={() => openEdit(p)}><Pencil className="w-4 h-4" /></Button></TableCell>
                 </TableRow>
@@ -146,7 +145,7 @@ const AdminProducts = () => {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>价格 (NZD)</Label><Input type="number" value={editing.price_nzd} onChange={e => setEditing((p: any) => ({ ...p, price_nzd: parseFloat(e.target.value) || 0 }))} /></div>
-                <div><Label>库存</Label><Input type="number" value={editing.stock_quantity} onChange={e => setEditing((p: any) => ({ ...p, stock_quantity: parseInt(e.target.value) || 0 }))} /></div>
+                <div><Label>库存</Label><Input type="number" value={editing.stock} onChange={e => setEditing((p: any) => ({ ...p, stock: parseInt(e.target.value) || 0 }))} /></div>
               </div>
               <div><Label>中文描述</Label><Textarea value={editing.description_zh || ''} onChange={e => setEditing((p: any) => ({ ...p, description_zh: e.target.value }))} rows={3} /></div>
               <div><Label>英文描述</Label><Textarea value={editing.description_en || ''} onChange={e => setEditing((p: any) => ({ ...p, description_en: e.target.value }))} rows={3} /></div>

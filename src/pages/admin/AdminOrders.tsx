@@ -51,7 +51,7 @@ const AdminOrders = () => {
   };
 
   const filtered = orders.filter(o =>
-    o.order_number?.includes(search) || o.customer_email?.includes(search) || o.customer_name?.includes(search)
+    o.order_number?.includes(search) || o.shipping_email?.includes(search) || o.shipping_name?.includes(search)
   );
 
   return (
@@ -82,7 +82,7 @@ const AdminOrders = () => {
                   <TableCell className="font-mono text-xs">{o.order_number}</TableCell>
                   <TableCell>{new Date(o.created_at).toLocaleDateString('zh-CN')}</TableCell>
                   <TableCell>{o.customer_name || o.customer_email}</TableCell>
-                  <TableCell>NZ${Number(o.total_nzd || 0).toFixed(0)}</TableCell>
+                  <TableCell>NZ${Number(o.total || 0).toFixed(0)}</TableCell>
                   <TableCell>
                     <Select value={o.status || 'pending'} onValueChange={v => updateStatus(o.id, v)}>
                       <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>

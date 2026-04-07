@@ -1,7 +1,7 @@
-import Navbar from '@/components/layout/Navbar';
-import ChatWidget from '@/components/chat/ChatWidget';
+import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/HeroSection';
-import CartDrawer from '@/components/cart/CartDrawer';
+import ChatWidget from '@/components/chat/ChatWidget';
+import CartDrawer from '@/components/CartDrawer';
 import SEOHead from '@/components/SEOHead';
 import { useApp } from '@/contexts/AppContext';
 

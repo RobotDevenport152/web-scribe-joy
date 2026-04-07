@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
@@ -12,6 +12,8 @@ import { toast } from 'sonner';
 export default function LoginPage() {
   const { locale } = useApp();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as any)?.from?.pathname || '/';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -25,7 +27,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       toast.success(locale === 'zh' ? '登录成功！' : 'Logged in successfully!');
-      navigate('/');
+      navigate(from, { replace: true });
     } catch (err: any) {
       toast.error(err.message || (locale === 'zh' ? '登录失败' : 'Login failed'));
     } finally {

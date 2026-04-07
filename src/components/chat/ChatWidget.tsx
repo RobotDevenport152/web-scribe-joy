@@ -15,9 +15,7 @@ const QUICK_REPLIES = [
 ];
 
 const ChatWidget = () => {
-  const lang = typeof window !== 'undefined'
-    ? (localStorage.getItem('pa-ui') ? JSON.parse(localStorage.getItem('pa-ui')!).state?.language : 'zh') || 'zh'
-    : 'zh';
+  const lang = (() => { try { return localStorage.getItem('pa-locale') || 'zh'; } catch { return 'zh'; } })();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([
     { role: 'assistant', content: lang === 'zh'
