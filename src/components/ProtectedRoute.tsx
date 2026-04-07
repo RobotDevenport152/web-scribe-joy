@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'admin' | 'moderator' | 'grower' | 'customer';
+  requiredRole?: 'admin' | 'moderator' | 'user';
   redirectTo?: string;
 }
 

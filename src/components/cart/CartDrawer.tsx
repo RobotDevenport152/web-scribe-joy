@@ -13,7 +13,7 @@ const CartDrawer = () => {
   const {
     items, currency, isOpen, setCartOpen,
     removeItem, updateQuantity, subtotalNZD,
-    promoCode, discountPercent, setPromoCode,
+    promoCode, discount, setPromoCode,
   } = useCartStore();
   const [promoInput, setPromoInput] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
@@ -178,7 +178,7 @@ const CartDrawer = () => {
                 ) : (
                   <div className="flex items-center justify-between text-sm font-body">
                     <span className="text-accent">✓ {promoCode}</span>
-                    <button onClick={() => setPromoCode(null, 0)} className="text-muted-foreground text-xs underline">
+                    <button onClick={() => setPromoCode(null, null)} className="text-muted-foreground text-xs underline">
                       {lang === 'zh' ? '移除' : 'Remove'}
                     </button>
                   </div>
