@@ -1,6 +1,7 @@
-import Navbar from '@/components/Navbar';
+import Navbar from '@/components/layout/Navbar';
+import ChatWidget from '@/components/chat/ChatWidget';
 import HeroSection from '@/components/HeroSection';
-import CartDrawer from '@/components/CartDrawer';
+import CartDrawer from '@/components/cart/CartDrawer';
 import SEOHead from '@/components/SEOHead';
 import { useApp } from '@/contexts/AppContext';
 
@@ -15,6 +16,7 @@ export default function Index() {
       <Navbar />
       <CartDrawer />
       <HeroSection />
+      <ChatWidget />
     </div>
   );
 }

@@ -7,7 +7,12 @@ type DbProduct = Tables<'products'>;
 
 // Convert DB product to legacy Product format for compatibility
 export function dbToLegacyProduct(p: DbProduct) {
-  const images = Array.isArray(p.images) ? (p.images as string[]) : [];
+  // images is jsonb [{url,alt,is_primary}] or text[] of URL strings — handle both
+  const rawImages = Array.isArray(p.images) ? (p.images as any[]) : [];
+  const imageUrls: string[] = rawImages
+    .map((img: any) => (typeof img === 'string' ? img : img?.url || ''))
+    .filter(Boolean);
+  const images = imageUrls;
   const nzd = Number(p.price_nzd);
   return {
     id: p.id,

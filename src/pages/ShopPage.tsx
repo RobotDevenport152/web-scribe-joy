@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCartStore, formatPrice } from '@/stores/cartStore';
+import { useCartStore, formatNZD } from '@/stores/cartStore';
 import { SleepQuizDialog } from '@/components/shop/SleepQuizDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -36,6 +36,7 @@ export default function ShopPage() {
   const [tier, setTier] = useState('all');
   const [sort, setSort] = useState<SortOption>('default');
   const [quizOpen, setQuizOpen] = useState(false);
+  const [search, setSearch] = useState('');
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['products', category, tier],
@@ -56,11 +57,25 @@ export default function ShopPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const sorted = products ? [...products].sort((a, b) => {
-    if (sort === 'price_asc') return a.price_nzd - b.price_nzd;
-    if (sort === 'price_desc') return b.price_nzd - a.price_nzd;
-    return 0;
-  }) : [];
+  // FIX: memoised filter+sort — avoids re-running on every unrelated render
+  const sorted = useMemo(() => {
+    if (!products) return [];
+    const q = search.trim().toLowerCase();
+    const filtered = products.filter(p => {
+      if (!q) return true;
+      return (
+        p.name_zh?.toLowerCase().includes(q) ||
+        p.name_en?.toLowerCase().includes(q) ||
+        p.description_zh?.toLowerCase().includes(q) ||
+        p.description_en?.toLowerCase().includes(q)
+      );
+    });
+    return [...filtered].sort((a: any, b: any) => {
+      if (sort === 'price_asc') return a.price_nzd - b.price_nzd;
+      if (sort === 'price_desc') return b.price_nzd - a.price_nzd;
+      return 0;
+    });
+  }, [products, search, sort, category, tier]);
 
   const stockLabel = (qty: number | null) => {
     if (!qty || qty <= 0) return { text: lang === 'zh' ? '已售罄' : 'Sold Out', color: 'bg-destructive text-destructive-foreground' };
@@ -91,6 +106,21 @@ export default function ShopPage() {
           {lang === 'zh' ? '产品展示' : 'Our Collection'}
         </h1>
         <div className="gold-line w-16 mb-8" />
+
+        {/* FIX: Search bar */}
+        <div className="relative mb-6">
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={lang === 'zh' ? '搜索产品…' : 'Search products…'}
+            className="w-full md:w-80 px-4 py-2.5 pl-10 border border-border rounded-sm bg-background text-foreground font-body text-sm focus:outline-none focus:border-accent transition-colors"
+          />
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" /></svg>
+          {search && (
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs">✕</button>
+          )}
+        </div>
 
         {/* Filters */}
         <div className="flex flex-wrap gap-3 mb-8">
@@ -170,7 +200,7 @@ export default function ShopPage() {
                     transition={{ delay: idx * 0.05 }}
                   >
                     <Link
-                      to={`/shop/${product.slug}`}
+                      to={`/product/${product.id}`}
                       className="group block"
                     >
                       <div className="relative aspect-[4/3] overflow-hidden rounded-sm bg-secondary mb-4">
@@ -200,7 +230,7 @@ export default function ShopPage() {
                         {lang === 'zh' ? product.name_en : product.name_zh}
                       </p>
                       <p className="mt-2 font-display text-lg text-accent">
-                        {formatPrice(product.price_nzd, currency)}
+                        {formatNZD(product.price_nzd, currency)}
                       </p>
                     </Link>
                   </motion.div>

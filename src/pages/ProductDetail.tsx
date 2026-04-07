@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
+import { useCartStore } from '@/stores/cartStore';
 import { useProduct, useProducts } from '@/hooks/useProducts';
 import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
@@ -38,6 +39,8 @@ const MOCK_REVIEWS = [
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { locale, fp, currency, addToCart, t, recentlyViewed, addRecentlyViewed } = useApp();
+  const addItem = useCartStore((s) => s.addItem);
+  const setCartOpen = useCartStore((s) => s.setCartOpen);
   const { toggle: toggleWishlist, isWishlisted } = useWishlist();
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
@@ -265,7 +268,18 @@ export default function ProductDetailPage() {
                         toast.error(locale === 'zh' ? '请先选择规格' : 'Please select a size first');
                         return;
                       }
-                      addToCart(product, selectedVariant || undefined);
+                      addItem({
+                        productId: product.id,
+                        name: product.nameZh,
+                        nameEn: product.nameEn,
+                        price_nzd: product.prices.NZD,
+                        price_cny: product.prices.CNY || Math.round(product.prices.NZD * 4.9),
+                        price_usd: product.prices.USD || Math.round(product.prices.NZD * 0.62),
+                        size: selectedVariant || '',
+                        color: '',
+                        image: images[0] || product.image || '',
+                      });
+                      setCartOpen(true);
                     }}
                     className="flex-1 py-3 bg-accent text-accent-foreground font-body font-semibold rounded-sm tracking-wider hover:bg-accent/90 transition"
                   >
@@ -544,7 +558,18 @@ export default function ProductDetailPage() {
               toast.error(locale === 'zh' ? '请先选择规格' : 'Please select a size');
               return;
             }
-            addToCart(product, selectedVariant || undefined);
+            addItem({
+              productId: product.id,
+              name: product.nameZh,
+              nameEn: product.nameEn,
+              price_nzd: product.prices.NZD,
+              price_cny: product.prices.CNY || Math.round(product.prices.NZD * 4.9),
+              price_usd: product.prices.USD || Math.round(product.prices.NZD * 0.62),
+              size: selectedVariant || '',
+              color: '',
+              image: images[0] || product.image || '',
+            });
+            setCartOpen(true);
           }}
           disabled={product.stock <= 0}
           className="flex-1 py-3 bg-accent text-accent-foreground font-body font-semibold rounded-sm disabled:opacity-50"

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useApp } from '@/contexts/AppContext';
+import { useCartStore, formatNZD } from '@/stores/cartStore';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
@@ -14,7 +15,14 @@ import { checkoutSchema, type CheckoutFormData } from '@/lib/schemas';
 type Step = 'info' | 'payment' | 'confirm';
 
 export default function CheckoutPage() {
-  const { locale, cart, fp, cartTotal, promoDiscount, promoCode, currency, t } = useApp();
+  const { locale, t } = useApp();
+  const { items: cart, currency, subtotalNZD, discount, promoCode, clearCart } = useCartStore();
+  const cartTotal = subtotalNZD();
+  const promoDiscount = !discount ? 0
+    : discount.type === 'fixed'
+      ? Math.min(discount.amountNZD, cartTotal)
+      : cartTotal * (discount.value / 100);
+  const fp = (amount: number) => formatNZD(amount, currency);
   const { user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>('info');
@@ -76,11 +84,11 @@ export default function CheckoutPage() {
         const { data, error } = await supabase.functions.invoke('create-checkout', {
           body: {
             items: cart.map(item => ({
-              productId: item.product.id,
-              name: locale === 'zh' ? item.product.nameZh : item.product.nameEn,
-              price: item.product.prices[currency],
+              productId: item.productId,
+              name: locale === 'zh' ? item.name : item.nameEn,
+              price: item.price_nzd,
               quantity: item.quantity,
-              variant: item.variant,
+              variant: item.size || undefined,
             })),
             currency,
             shippingInfo: {
@@ -356,24 +364,24 @@ export default function CheckoutPage() {
 
                   {cart.map(item => (
                     <div
-                      key={`${item.product.id}-${item.variant}`}
+                      key={`${item.productId}-${item.size}`}
                       className="flex items-center gap-3 bg-card p-3 rounded-sm border border-border"
                     >
                       <img
-                        src={item.product.image}
+                        src={item.image || '/placeholder.svg'}
                         alt=""
                         className="w-12 h-12 object-cover rounded"
                       />
                       <div className="flex-1">
                         <p className="font-body text-sm font-semibold">
-                          {locale === 'zh' ? item.product.nameZh : item.product.nameEn}
+                          {locale === 'zh' ? item.name : item.nameEn}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {item.variant} × {item.quantity}
+                          {item.size} × {item.quantity}
                         </p>
                       </div>
                       <p className="text-gold font-body font-semibold">
-                        {fp(item.product.prices[currency] * item.quantity)}
+                        {fp(item.price_nzd * item.quantity)}
                       </p>
                     </div>
                   ))}
@@ -409,14 +417,14 @@ export default function CheckoutPage() {
               </h3>
               {cart.map(item => (
                 <div
-                  key={`${item.product.id}-${item.variant}`}
+                  key={`${item.productId}-${item.size}`}
                   className="flex justify-between text-sm font-body py-1"
                 >
                   <span>
-                    {locale === 'zh' ? item.product.nameZh : item.product.nameEn} ×
+                    {locale === 'zh' ? item.name : item.nameEn} ×
                     {item.quantity}
                   </span>
-                  <span>{fp(item.product.prices[currency] * item.quantity)}</span>
+                  <span>{fp(item.price_nzd * item.quantity)}</span>
                 </div>
               ))}
               <div className="border-t border-border mt-3 pt-3 space-y-1 text-sm font-body">
