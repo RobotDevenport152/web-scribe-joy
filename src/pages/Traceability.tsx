@@ -74,12 +74,6 @@ export default function TraceabilityPage() {
     if (!found) {
       setSelectedBatch(null);
       toast.error(locale === 'zh' ? '未找到该批次，请检查编号是否正确' : 'Batch not found. Please check the code.');
-        grade: data.fiber_grade || 'N/A',
-        status: data.status || 'raw',
-      });
-    } else {
-      setSelectedBatch(null);
-      toast.error(locale === 'zh' ? '未找到该批次，请检查编号是否正确' : 'Batch not found. Please check the code.');
     }
   };
 
