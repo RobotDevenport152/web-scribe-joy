@@ -39,50 +39,41 @@ export default function TraceabilityPage() {
   const [copied, setCopied] = useState(false);
   const [searching, setSearching] = useState(false);
 
+  const fetchBatch = async (code: string): Promise<boolean> => {
+    const { data } = await supabase
+      .from('fiber_batches')
+      .select('*, growers(farm_name)')
+      .ilike('batch_code', code)
+      .maybeSingle();
+    if (data) {
+      setSelectedBatch({
+        code: (data as any).batch_code,
+        farm: (data as any).growers?.farm_name || 'Unknown',
+        region: (data as any).region || 'New Zealand',
+        date: (data as any).harvest_date || (data as any).created_at || '',
+        weight: Number((data as any).weight_kg) || 0,
+        micron: Number((data as any).micron_avg) || 0,
+        grade: (data as any).grade || 'N/A',
+        status: (data as any).processing_status || 'raw',
+      });
+      return true;
+    }
+    return false;
+  };
+
   useEffect(() => {
     if (initialCode) {
-      (async () => {
-        // Queries public_fiber_batches VIEW (not the base table)
-        // This view exposes only non-PII fields per the RLS migration.
-        const { data } = await supabase
-          .from('public_fiber_batches')
-          .select('*')
-          .ilike('batch_code', initialCode)
-          .maybeSingle();
-        if (data) {
-          setSelectedBatch({
-            code: data.batch_code,
-            farm: data.farm_name,
-            region: data.region,
-            date: data.shearing_date || data.created_at,
-            weight: Number(data.weight_kg) || 0,
-            micron: Number(data.micron_measurement) || 0,
-            grade: data.fiber_grade || 'N/A',
-            status: data.status || 'raw',
-          });
-        }
-      })();
+      fetchBatch(initialCode);
     }
   }, [initialCode]);
 
   const handleSearch = async () => {
     setSearching(true);
-    // Queries public_fiber_batches VIEW (not the base table)
-        // This view exposes only non-PII fields per the RLS migration.
-        const { data } = await supabase
-      .from('public_fiber_batches')
-      .select('*')
-      .ilike('batch_code', searchCode.trim())
-      .maybeSingle();
+    const found = await fetchBatch(searchCode.trim());
     setSearching(false);
-    if (data) {
-      setSelectedBatch({
-        code: data.batch_code,
-        farm: data.farm_name,
-        region: data.region,
-        date: data.shearing_date || data.created_at,
-        weight: Number(data.weight_kg) || 0,
-        micron: Number(data.micron_measurement) || 0,
+    if (!found) {
+      setSelectedBatch(null);
+      toast.error(locale === 'zh' ? '未找到该批次，请检查编号是否正确' : 'Batch not found. Please check the code.');
         grade: data.fiber_grade || 'N/A',
         status: data.status || 'raw',
       });
