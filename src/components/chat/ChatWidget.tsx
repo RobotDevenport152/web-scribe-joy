@@ -8,16 +8,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 type Msg = { role: 'user' | 'assistant'; content: string };
 
 const QUICK_REPLIES = [
-  '推荐适合我的被子',
-  '高奢款和轻奢款有什么区别',
-  '发货需要多久',
-  '查询我的订单',
+  { zh: '推荐适合我的被子',         en: 'Recommend a duvet for me' },
+  { zh: '高奢款和轻奢款有什么区别',   en: "Premium vs Luxury — what's the difference?" },
+  { zh: '发货需要多久',             en: 'How long does shipping take?' },
+  { zh: '查询我的订单',             en: 'Check my order status' },
 ];
 
 const ChatWidget = () => {
+  const lang = typeof window !== 'undefined'
+    ? (localStorage.getItem('pa-ui') ? JSON.parse(localStorage.getItem('pa-ui')!).state?.language : 'zh') || 'zh'
+    : 'zh';
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([
-    { role: 'assistant', content: '您好！我是太平洋羊驼的 AI 助手，可以帮您了解产品、查询订单或推荐最适合您的羊驼被。' },
+    { role: 'assistant', content: lang === 'zh'
+        ? '您好！我是太平洋羊驼的 AI 助手，可以帮您了解产品、查询订单或推荐最适合您的羊驼被。'
+        : "Hi! I'm Pacific Alpacas' AI assistant. I can help you with products, orders, or finding the perfect alpaca duvet." },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -116,13 +121,13 @@ const ChatWidget = () => {
               {/* Quick replies */}
               {showQuick && messages.length <= 1 && (
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {QUICK_REPLIES.map(q => (
+                  {QUICK_REPLIES.map((q) => (
                     <button
-                      key={q}
-                      onClick={() => sendMessage(q)}
+                      key={q.zh}
+                      onClick={() => sendMessage(lang === 'zh' ? q.zh : q.en)}
                       className="text-xs border rounded-full px-3 py-1.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                     >
-                      {q}
+                      {lang === 'zh' ? q.zh : q.en}
                     </button>
                   ))}
                 </div>

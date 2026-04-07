@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { X, Plus, Minus, Trash2 } from 'lucide-react';
-import { useCartStore, formatPrice } from '@/stores/cartStore';
+import { useCartStore, formatPrice, formatNZD } from '@/stores/cartStore';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
@@ -13,14 +13,17 @@ const CartDrawer = () => {
   const {
     items, currency, isOpen, setCartOpen,
     removeItem, updateQuantity, subtotalNZD,
-    promoCode, discountPercent, setPromoCode,
+    promoCode, discount, setPromoCode,
   } = useCartStore();
   const [promoInput, setPromoInput] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
 
   const subtotal = subtotalNZD();
-  const discount = subtotal * (discountPercent / 100);
-  const total = subtotal - discount;
+  const discountAmount = !discount ? 0
+    : discount.type === 'fixed'
+      ? Math.min(discount.amountNZD, subtotal)
+      : subtotal * (discount.value / 100);
+  const total = subtotal - discountAmount;
 
   const handleApplyPromo = async () => {
     if (!promoInput.trim()) return;
@@ -49,11 +52,15 @@ const CartDrawer = () => {
       }
 
       if (data.min_order_nzd && subtotal < data.min_order_nzd) {
-        toast.error(lang === 'zh' ? `最低消费 ${formatPrice(data.min_order_nzd, currency)}` : `Minimum order ${formatPrice(data.min_order_nzd, currency)}`);
+        toast.error(lang === 'zh' ? `最低消费 ${formatNZD(data.min_order_nzd, currency)}` : `Minimum order ${formatNZD(data.min_order_nzd, currency)}`);
         return;
       }
 
-      const discountVal = data.discount_type === 'percent' ? (data.discount_value || 0) : 0;
+      const discountVal = data.discount_type === 'percent'
+        ? { type: 'percent' as const, value: data.discount_value || 0 }
+        : data.discount_type === 'fixed'
+          ? { type: 'fixed' as const, amountNZD: data.discount_value || 0 }
+          : null;
       setPromoCode(data.code, discountVal);
       toast.success(lang === 'zh' ? `已应用促销码：${data.code}` : `Applied: ${data.code}`);
     } catch {
@@ -119,7 +126,7 @@ const CartDrawer = () => {
                       <div className="flex-1 min-w-0">
                         <p className="font-body text-sm text-foreground truncate">{item.name}</p>
                         <p className="text-xs text-muted-foreground font-body">{item.size} {item.color && `· ${item.color}`}</p>
-                        <p className="text-sm text-accent font-body mt-1">{formatPrice(item.price, currency)}</p>
+                        <p className="text-sm text-accent font-body mt-1">{formatPrice(item, currency)}</p>
                         <div className="flex items-center gap-2 mt-2">
                           <button
                             onClick={() => updateQuantity(item.productId, item.size, item.quantity - 1)}
@@ -171,7 +178,7 @@ const CartDrawer = () => {
                 ) : (
                   <div className="flex items-center justify-between text-sm font-body">
                     <span className="text-accent">✓ {promoCode}</span>
-                    <button onClick={() => setPromoCode(null, 0)} className="text-muted-foreground text-xs underline">
+                    <button onClick={() => setPromoCode(null, null)} className="text-muted-foreground text-xs underline">
                       {lang === 'zh' ? '移除' : 'Remove'}
                     </button>
                   </div>
@@ -181,17 +188,17 @@ const CartDrawer = () => {
                 <div className="space-y-2 text-sm font-body">
                   <div className="flex justify-between text-foreground">
                     <span>{lang === 'zh' ? '小计' : 'Subtotal'}</span>
-                    <span>{formatPrice(subtotal, currency)}</span>
+                    <span>{formatNZD(subtotal, currency)}</span>
                   </div>
-                  {discount > 0 && (
+                  {discountAmount > 0 && (
                     <div className="flex justify-between text-accent">
                       <span>{lang === 'zh' ? '折扣' : 'Discount'}</span>
-                      <span>-{formatPrice(discount, currency)}</span>
+                      <span>-{formatNZD(discountAmount, currency)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-foreground font-medium text-base pt-2 border-t border-border">
                     <span>{lang === 'zh' ? '合计' : 'Total'}</span>
-                    <span>{formatPrice(total, currency)}</span>
+                    <span>{formatNZD(total, currency)}</span>
                   </div>
                 </div>
 

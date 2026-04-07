@@ -14,7 +14,14 @@ const ProductDetail = React.lazy(() => import("./pages/ProductDetail"));
 const Checkout = React.lazy(() => import("./pages/Checkout"));
 const OrderSuccess = React.lazy(() => import("./pages/OrderSuccess"));
 const Traceability = React.lazy(() => import("./pages/Traceability"));
-const Admin = React.lazy(() => import("./pages/Admin"));
+const AdminLayout = React.lazy(() => import("./pages/admin/AdminLayout"));
+const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminOrders = React.lazy(() => import("./pages/admin/AdminOrders"));
+const AdminProducts = React.lazy(() => import("./pages/admin/AdminProducts"));
+const AdminGrowers = React.lazy(() => import("./pages/admin/AdminGrowers"));
+const AdminFiberBatches = React.lazy(() => import("./pages/admin/AdminFiberBatches"));
+const AdminPromos = React.lazy(() => import("./pages/admin/AdminPromos"));
+const GrowerDashboard = React.lazy(() => import("./pages/GrowerDashboard"));
 const Contact = React.lazy(() => import("./pages/Contact"));
 const GrowersInfo = React.lazy(() => import("./pages/GrowersInfo"));
 const Wholesale = React.lazy(() => import("./pages/Wholesale"));
@@ -112,12 +119,29 @@ const App = () => (
                 }
               />
 
-              {/* P1 FIX: Admin route — require 'admin' role */}
+              {/* Admin nested routes — require 'admin' role */}
               <Route
                 path="/admin"
                 element={
                   <ProtectedRoute requiredRole="admin">
-                    <Admin />
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<AdminDashboard />} />
+                <Route path="orders" element={<AdminOrders />} />
+                <Route path="products" element={<AdminProducts />} />
+                <Route path="growers" element={<AdminGrowers />} />
+                <Route path="fiber-batches" element={<AdminFiberBatches />} />
+                <Route path="promos" element={<AdminPromos />} />
+              </Route>
+
+              {/* Grower dashboard */}
+              <Route
+                path="/grower/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <GrowerDashboard />
                   </ProtectedRoute>
                 }
               />
