@@ -1,12 +1,10 @@
-import { useEffect } from 'react';
-import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { LayoutDashboard, Package, ShoppingCart, Users, Layers, Tag, LogOut } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 
 const NAV = [
@@ -19,21 +17,8 @@ const NAV = [
 ];
 
 const AdminLayout = () => {
-  const { user, loading, isAdmin, signOut } = useAuth();
-  const navigate = useNavigate();
+  const { signOut } = useAuth();
   const location = useLocation();
-
-  useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
-      navigate('/login');
-    }
-  }, [user, loading, isAdmin, navigate]);
-
-  if (loading) {
-    return <div className="min-h-screen pt-20 px-4"><Skeleton className="h-screen w-full" /></div>;
-  }
-
-  if (!isAdmin) return null;
 
   return (
     <SidebarProvider>
@@ -46,47 +31,31 @@ const AdminLayout = () => {
                 <SidebarMenu>
                   {NAV.map(item => (
                     <SidebarMenuItem key={item.url}>
-                      <SidebarMenuButton asChild>
-                        <Link
-                          to={item.url}
-                          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
-                            location.pathname === item.url
-                              ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-                              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50'
-                          }`}
-                        >
+                      <SidebarMenuButton asChild isActive={location.pathname === item.url}>
+                        <Link to={item.url}>
                           <item.icon className="w-4 h-4" />
                           <span>{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <button
-                        onClick={() => { signOut(); navigate('/'); }}
-                        className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 w-full"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        <span>退出登录</span>
-                      </button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
+          <div className="p-4 border-t border-border">
+            <Button variant="ghost" size="sm" onClick={signOut} className="w-full justify-start gap-2">
+              <LogOut className="w-4 h-4" />
+              <span>退出登录</span>
+            </Button>
+          </div>
         </Sidebar>
-
-        <div className="flex-1 flex flex-col">
-          <header className="h-12 flex items-center border-b px-4">
-            <SidebarTrigger />
-            <span className="ml-3 font-display text-sm text-foreground">Pacific Alpacas Admin</span>
-          </header>
-          <main className="flex-1 p-6 overflow-auto">
+        <main className="flex-1 overflow-auto">
+          <div className="p-6">
+            <SidebarTrigger className="mb-4" />
             <Outlet />
-          </main>
-        </div>
+          </div>
+        </main>
       </div>
     </SidebarProvider>
   );

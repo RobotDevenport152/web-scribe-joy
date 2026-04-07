@@ -21,7 +21,6 @@ const AdminProducts = React.lazy(() => import("./pages/admin/AdminProducts"));
 const AdminGrowers = React.lazy(() => import("./pages/admin/AdminGrowers"));
 const AdminFiberBatches = React.lazy(() => import("./pages/admin/AdminFiberBatches"));
 const AdminPromos = React.lazy(() => import("./pages/admin/AdminPromos"));
-const GrowerDashboard = React.lazy(() => import("./pages/GrowerDashboard"));
 const Contact = React.lazy(() => import("./pages/Contact"));
 const GrowersInfo = React.lazy(() => import("./pages/GrowersInfo"));
 const Wholesale = React.lazy(() => import("./pages/Wholesale"));
@@ -101,11 +100,11 @@ const App = () => (
                 }
               />
 
-              {/* Grower routes — require authentication */}
+              {/* P1 FIX: Grower routes — require 'grower' role */}
               <Route
                 path="/grower/batches"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="grower">
                     <GrowerBatches />
                   </ProtectedRoute>
                 }
@@ -113,13 +112,13 @@ const App = () => (
               <Route
                 path="/grower/credits"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="grower">
                     <GrowerCredits />
                   </ProtectedRoute>
                 }
               />
 
-              {/* Admin nested routes — require 'admin' role */}
+              {/* Admin nested routes */}
               <Route
                 path="/admin"
                 element={
@@ -135,16 +134,6 @@ const App = () => (
                 <Route path="fiber-batches" element={<AdminFiberBatches />} />
                 <Route path="promos" element={<AdminPromos />} />
               </Route>
-
-              {/* Grower dashboard */}
-              <Route
-                path="/grower/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <GrowerDashboard />
-                  </ProtectedRoute>
-                }
-              />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
