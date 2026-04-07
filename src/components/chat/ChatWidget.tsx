@@ -15,18 +15,18 @@ const QUICK_REPLIES = [
 ];
 
 const ChatWidget = () => {
+  const lang = typeof window !== 'undefined'
+    ? (localStorage.getItem('pa-ui') ? JSON.parse(localStorage.getItem('pa-ui')!).state?.language : 'zh') || 'zh'
+    : 'zh';
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([
     { role: 'assistant', content: lang === 'zh'
         ? '您好！我是太平洋羊驼的 AI 助手，可以帮您了解产品、查询订单或推荐最适合您的羊驼被。'
-        : 'Hi! I'm Pacific Alpacas' AI assistant. I can help you with products, orders, or finding the perfect alpaca duvet.' },
+        : "Hi! I'm Pacific Alpacas' AI assistant. I can help you with products, orders, or finding the perfect alpaca duvet." },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [showQuick, setShowQuick] = useState(true);
-  const lang = typeof window !== 'undefined'
-    ? (localStorage.getItem('pa-ui') ? JSON.parse(localStorage.getItem('pa-ui')!).state?.language : 'zh') || 'zh'
-    : 'zh';
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
