@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   /** If provided, user must have this role in user_roles table */
-  requiredRole?: 'admin' | 'moderator' | 'grower' | 'customer';
+  requiredRole?: string;
   /** Where to redirect unauthenticated users (default: /login) */
   redirectTo?: string;
 }
@@ -39,13 +39,13 @@ export default function ProtectedRoute({
     }
 
     supabase
-      .rpc('has_role', { _user_id: user.id, _role: requiredRole })
-      .then(({ data }) => {
-        setHasRole(!!data);
-        setRoleChecked(true);
-      })
-      .catch(() => {
-        setHasRole(false);
+      .rpc('has_role', { _user_id: user.id, _role: requiredRole as any })
+      .then(({ data, error }) => {
+        if (error) {
+          setHasRole(false);
+        } else {
+          setHasRole(!!data);
+        }
         setRoleChecked(true);
       });
   }, [user, requiredRole]);
