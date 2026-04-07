@@ -9,7 +9,7 @@ type Msg = { role: 'user' | 'assistant'; content: string };
 
 const QUICK_REPLIES = [
   { zh: '推荐适合我的被子',         en: 'Recommend a duvet for me' },
-  { zh: '高奢款和轻奢款有什么区别',   en: 'Premium vs Luxury — what's the difference?' },
+  { zh: '高奢款和轻奢款有什么区别',   en: "Premium vs Luxury — what's the difference?" },
   { zh: '发货需要多久',             en: 'How long does shipping take?' },
   { zh: '查询我的订单',             en: 'Check my order status' },
 ];
