@@ -14,7 +14,7 @@ const SYSTEM_PROMPT = `你是太平洋羊驼（Pacific Alpacas）的专业客服
 回答风格：专业但亲切，优先中文，回答简洁（200字以内）。
 不确定的内容：引导用户联系微信客服或发邮件至 info@pacificalpacas.com`;
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {

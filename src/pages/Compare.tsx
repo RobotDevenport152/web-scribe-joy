@@ -1,7 +1,7 @@
 import { useApp } from '@/contexts/AppContext';
-import Navbar from '@/components/Navbar';
+import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/Footer';
-import CartDrawer from '@/components/CartDrawer';
+import CartDrawer from '@/components/cart/CartDrawer';
 import SEOHead from '@/components/SEOHead';
 import { Link } from 'react-router-dom';
 import { Check } from 'lucide-react';

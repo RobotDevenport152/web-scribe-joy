@@ -33,6 +33,7 @@ const MyOrders = React.lazy(() => import("./pages/MyOrders"));
 const Compare = React.lazy(() => import("./pages/Compare"));
 const Returns = React.lazy(() => import("./pages/Returns"));
 const GrowerBatches = React.lazy(() => import("./pages/GrowerBatches"));
+const GrowerDashboard = React.lazy(() => import("./pages/GrowerDashboard"));
 const GrowerCredits = React.lazy(() => import("./pages/GrowerCredits"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 
