@@ -1,21 +1,44 @@
-import Navbar from '@/components/Navbar';
-import HeroSection from '@/components/HeroSection';
+import Navbar from '@/components/layout/Navbar';
+import HeroSection from '@/components/home/HeroSection';
+import AuthorityBanner from '@/components/home/AuthorityBanner';
+import BrandHeritageSection from '@/components/home/BrandHeritageSection';
+import SleepScienceSection from '@/components/home/SleepScienceSection';
+import FiberSection from '@/components/home/FiberSection';
+import ProcessSection from '@/components/home/ProcessSection';
+import CertificationsSection from '@/components/home/CertificationsSection';
+import GrowerNetworkSection from '@/components/home/GrowerNetworkSection';
+import MediaCoverageSection from '@/components/home/MediaCoverageSection';
+import Footer from '@/components/layout/Footer';
+import CartDrawer from '@/components/cart/CartDrawer';
 import ChatWidget from '@/components/chat/ChatWidget';
-import CartDrawer from '@/components/CartDrawer';
 import SEOHead from '@/components/SEOHead';
-import { useApp } from '@/contexts/AppContext';
+import { useUIStore } from '@/stores/uiStore';
 
 export default function Index() {
-  const { locale } = useApp();
+  const { language } = useUIStore();
+  const locale = language;
   return (
     <div className="min-h-screen">
       <SEOHead
-        title={locale === 'zh' ? '新西兰最大羊驼纤维品牌' : 'New Zealand Premium Alpaca Fiber Brand'}
-        description={locale === 'zh' ? '太平洋羊驼 — 自2001年起，专注奢华羊驼纤维寝具，800+合作牧场，全球深睡新标准。' : 'Pacific Alpacas — Since 2001, luxury alpaca fiber bedding from 800+ partner farms. The new standard of deep sleep.'}
+        title={locale === 'zh' ? '太平洋羊驼 — 全球深睡新标准' : 'Pacific Alpacas — New Zealand Premium Alpaca Fiber'}
+        description={locale === 'zh'
+          ? '太平洋羊驼，自2001年起专注奢华羊驼纤维寝具，800+合作牧场，全球深睡新标准。'
+          : 'Pacific Alpacas — Since 2001, luxury alpaca fiber bedding from 800+ NZ farms.'}
       />
       <Navbar />
       <CartDrawer />
-      <HeroSection />
+      <main>
+        <HeroSection />
+        <AuthorityBanner />
+        <BrandHeritageSection />
+        <SleepScienceSection />
+        <FiberSection />
+        <ProcessSection />
+        <CertificationsSection />
+        <GrowerNetworkSection />
+        <MediaCoverageSection />
+      </main>
+      <Footer />
       <ChatWidget />
     </div>
   );

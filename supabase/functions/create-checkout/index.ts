@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -24,7 +23,7 @@ function calculatePromoDiscount(code: string | null | undefined, subtotal: numbe
   if (promo.minAmount && subtotal < promo.minAmount) return 0;
   return promo.type === "percent" ? parseFloat((subtotal * promo.discount / 100).toFixed(2)) : promo.discount;
 }
-serve(async (req) => {
+Deno.serve(async (req) => {
   const origin = req.headers.get("origin");
   const corsHeaders = getCorsHeaders(origin);
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
