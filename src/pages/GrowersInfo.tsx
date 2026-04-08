@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
-import Navbar from '@/components/layout/Navbar';
-import CartDrawer from '@/components/cart/CartDrawer';
+import Navbar from '@/components/Navbar';
+import CartDrawer from '@/components/CartDrawer';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/SEOHead';
 import { motion } from 'framer-motion';

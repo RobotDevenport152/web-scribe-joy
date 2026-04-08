@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import Navbar from '@/components/layout/Navbar';
+import Navbar from '@/components/Navbar';
 import { motion } from 'framer-motion';
 import { Check, Lock } from 'lucide-react';
 import { toast } from 'sonner';
@@ -360,7 +360,7 @@ export default function CheckoutPage() {
                       className="flex items-center gap-3 bg-card p-3 rounded-sm border border-border"
                     >
                       <img
-                        src={item.image || "/placeholder.svg"}
+                        src={item.product.image}
                         alt=""
                         className="w-12 h-12 object-cover rounded"
                       />
