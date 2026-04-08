@@ -154,12 +154,64 @@ export type Database = {
         }
         Relationships: []
       }
+      order_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          order_id: string
+          product_id: string | null
+          product_name: string
+          quantity: number
+          total_price: number
+          unit_price: number
+          variant: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          order_id: string
+          product_id?: string | null
+          product_name: string
+          quantity?: number
+          total_price: number
+          unit_price: number
+          variant?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          order_id?: string
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+          variant?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           created_at: string | null
           currency: string | null
           customer_email: string
           customer_name: string | null
+          discount: number | null
           discount_nzd: number | null
           exchange_rate: number | null
           id: string
@@ -168,10 +220,17 @@ export type Database = {
           order_number: string
           payment_intent_id: string | null
           payment_method: string | null
+          promo_code: string | null
           shipping_address: Json | null
+          shipping_cost: number | null
+          shipping_email: string | null
+          shipping_name: string | null
           shipping_nzd: number | null
+          shipping_phone: string | null
           status: string | null
+          subtotal: number | null
           subtotal_nzd: number | null
+          total: number | null
           total_nzd: number | null
           tracking_number: string | null
           updated_at: string | null
@@ -182,6 +241,7 @@ export type Database = {
           currency?: string | null
           customer_email: string
           customer_name?: string | null
+          discount?: number | null
           discount_nzd?: number | null
           exchange_rate?: number | null
           id?: string
@@ -190,10 +250,17 @@ export type Database = {
           order_number: string
           payment_intent_id?: string | null
           payment_method?: string | null
+          promo_code?: string | null
           shipping_address?: Json | null
+          shipping_cost?: number | null
+          shipping_email?: string | null
+          shipping_name?: string | null
           shipping_nzd?: number | null
+          shipping_phone?: string | null
           status?: string | null
+          subtotal?: number | null
           subtotal_nzd?: number | null
+          total?: number | null
           total_nzd?: number | null
           tracking_number?: string | null
           updated_at?: string | null
@@ -204,6 +271,7 @@ export type Database = {
           currency?: string | null
           customer_email?: string
           customer_name?: string | null
+          discount?: number | null
           discount_nzd?: number | null
           exchange_rate?: number | null
           id?: string
@@ -212,10 +280,17 @@ export type Database = {
           order_number?: string
           payment_intent_id?: string | null
           payment_method?: string | null
+          promo_code?: string | null
           shipping_address?: Json | null
+          shipping_cost?: number | null
+          shipping_email?: string | null
+          shipping_name?: string | null
           shipping_nzd?: number | null
+          shipping_phone?: string | null
           status?: string | null
+          subtotal?: number | null
           subtotal_nzd?: number | null
+          total?: number | null
           total_nzd?: number | null
           tracking_number?: string | null
           updated_at?: string | null
