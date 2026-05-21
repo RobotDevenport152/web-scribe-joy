@@ -11,7 +11,7 @@ import SEOHead from '@/components/SEOHead';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-type Category = 'all' | 'newborn' | 'duvet' | 'apparel' | 'vest' | 'scarf' | 'sweater';
+type Category = Product['category'] | 'all';
 type SortKey = 'featured' | 'priceLow' | 'priceHigh' | 'name';
 
 export default function ShopPage() {
@@ -38,7 +38,7 @@ export default function ShopPage() {
 
   const filtered = useMemo(() => {
     if (!dbProducts) return [];
-    let list = [...dbProducts].filter(p => {
+    const list = [...dbProducts].filter(p => {
       const name = locale === 'zh' ? p.nameZh : p.nameEn;
       const desc = locale === 'zh' ? p.descZh : p.descEn;
       const q = debouncedSearch.toLowerCase();
@@ -60,12 +60,12 @@ export default function ShopPage() {
 
   const categories: { key: Category; label: string }[] = [
     { key: 'all', label: t.products.filter.all },
-    { key: 'newborn', label: locale === 'zh' ? '初生系列' : 'Newborn' },
-    { key: 'duvet', label: locale === 'zh' ? '羊驼被' : 'Duvets' },
-    { key: 'apparel', label: locale === 'zh' ? '大衣' : 'Coats' },
-    { key: 'vest', label: locale === 'zh' ? '马甲' : 'Vests' },
-    { key: 'scarf', label: locale === 'zh' ? '围巾' : 'Scarves' },
-    { key: 'sweater', label: locale === 'zh' ? '毛衣' : 'Sweaters' },
+    { key: 'newborn' as Category, label: locale === 'zh' ? '初生系列' : 'Newborn' },
+    { key: 'duvet' as Category, label: locale === 'zh' ? '羊驼被' : 'Duvets' },
+    { key: 'apparel' as Category, label: locale === 'zh' ? '大衣' : 'Coats' },
+    { key: 'vest' as Category, label: locale === 'zh' ? '马甲' : 'Vests' },
+    { key: 'scarf' as Category, label: locale === 'zh' ? '围巾' : 'Scarves' },
+    { key: 'sweater' as Category, label: locale === 'zh' ? '毛衣' : 'Sweaters' },
   ];
 
   const sorts: { key: SortKey; label: string }[] = [
@@ -116,7 +116,7 @@ export default function ShopPage() {
                   { labelZh: '送商务客户', labelEn: 'For Clients', slug: 'duvet-classic' },
                   { labelZh: '送新生儿家庭', labelEn: 'For Newborn', slug: 'duvet-newborn' },
                 ] as const).map(opt => {
-                  const product = dbProducts?.find((p: any) => p.slug === opt.slug);
+                  const product = dbProducts?.find((p: Product & { slug?: string }) => p.slug === opt.slug);
                   if (!product) return null;
                   return (
                     <Link
@@ -258,7 +258,7 @@ export default function ShopPage() {
               </button>
               {dbProducts && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-xl mx-auto text-left">
-                  {dbProducts.filter((p: any) => p.featured).slice(0, 3).map((p: any) => (
+                  {dbProducts.filter((p: Product) => p.featured).slice(0, 3).map((p: Product) => (
                     <Link key={p.id} to={`/product/${p.id}`} className="group border border-border rounded-lg overflow-hidden hover:border-gold transition-colors">
                       <div className="aspect-square overflow-hidden bg-card">
                         <img src={p.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />

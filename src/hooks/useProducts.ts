@@ -5,12 +5,14 @@ import type { Currency } from '@/lib/store';
 
 type DbProduct = Tables<'products'>;
 
+interface ImageObject { url?: string; alt?: string; is_primary?: boolean }
+
 // Convert DB product to legacy Product format for compatibility
 export function dbToLegacyProduct(p: DbProduct) {
   // images is jsonb [{url,alt,is_primary}] or text[] of URL strings — handle both
-  const rawImages = Array.isArray(p.images) ? (p.images as any[]) : [];
+  const rawImages = Array.isArray(p.images) ? (p.images as unknown[]) : [];
   const imageUrls: string[] = rawImages
-    .map((img: any) => (typeof img === 'string' ? img : img?.url || ''))
+    .map((img: unknown) => (typeof img === 'string' ? img : (img as ImageObject | null)?.url || ''))
     .filter(Boolean);
   const images = imageUrls;
   const nzd = Number(p.price_nzd);
@@ -20,7 +22,7 @@ export function dbToLegacyProduct(p: DbProduct) {
     nameZh: p.name_zh,
     descEn: p.description_en || '',
     descZh: p.description_zh || '',
-    category: p.category as any,
+    category: (p.category as string) as 'bedding' | 'outerwear' | 'accessories',
     prices: {
       NZD: nzd,
       CNY: Math.round(nzd * 4.5),
@@ -30,7 +32,12 @@ export function dbToLegacyProduct(p: DbProduct) {
     images: images,
     badge: p.is_featured ? 'Featured' : undefined,
     variants: Array.isArray(p.size_options)
-      ? (p.size_options as any[]).map((v: any) => ({ label: v.name || v.label || v, value: v.name || v.value || v }))
+      ? (p.size_options as unknown[]).map((v: unknown) => {
+          const item = v as { name?: string | number; label?: string | number; value?: string | number } | string | number;
+          const label = typeof item === 'object' ? (item.name || item.label || '') : String(item);
+          const value = typeof item === 'object' ? (item.name || item.value || '') : String(item);
+          return { label: String(label), value: String(value) };
+        })
       : undefined,
     stock: p.stock_quantity ?? 0,
     featured: p.is_featured ?? false,

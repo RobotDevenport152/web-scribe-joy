@@ -48,7 +48,7 @@ const ChatWidget = () => {
       if (error) throw error;
       const reply = data?.choices?.[0]?.message?.content || data?.content || data?.text || '抱歉，我暂时无法回答，请稍后再试。';
       setMessages([...newMsgs, { role: 'assistant', content: reply }]);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Chat error:', e);
       setMessages([...newMsgs, { role: 'assistant', content: '网络异常，请稍后重试或联系微信客服。' }]);
     } finally {

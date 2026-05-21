@@ -1,0 +1,6 @@
+name = "recommend"
+type = "http"
+entry = "index.ts"
+
+[vars]
+ANTHROPIC_API_KEY = "" # Set this in Supabase Dashboard or CI secrets

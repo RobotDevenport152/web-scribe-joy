@@ -39,7 +39,7 @@ export default function ProtectedRoute({
     }
 
     supabase
-      .rpc('has_role', { _user_id: user.id, _role: requiredRole as any })
+      .rpc('has_role', { _user_id: user.id, _role: requiredRole })
       .then(({ data, error }) => {
         if (error) {
           setHasRole(false);
