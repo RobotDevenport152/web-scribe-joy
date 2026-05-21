@@ -13,7 +13,9 @@ export default function RegisterPage() {
   const { locale } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as any)?.from?.pathname || '/';
+  type LocationState = { from?: { pathname?: string } } | null;
+  const state = location.state as LocationState;
+  const from = state?.from?.pathname ?? '/';
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -41,8 +43,9 @@ export default function RegisterPage() {
       if (error) throw error;
       toast.success(locale === 'zh' ? '注册成功！请检查邮箱验证链接。' : 'Registration successful! Please check your email for verification.');
       navigate('/login');
-    } catch (err: any) {
-      toast.error(err.message || (locale === 'zh' ? '注册失败' : 'Registration failed'));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : (locale === 'zh' ? '注册失败' : 'Registration failed');
+      toast.error(message);
     } finally {
       setLoading(false);
     }

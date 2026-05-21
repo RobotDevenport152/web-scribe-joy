@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { useProduct, useProducts } from '@/hooks/useProducts';
+import { type Product } from '@/lib/store';
 import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
 import Footer from '@/components/Footer';
@@ -46,6 +47,15 @@ export default function ProductDetailPage() {
   const { data: product, isLoading } = useProduct(id || '');
   const { data: allProducts } = useProducts();
 
+  type LegacyProduct = Product & {
+    images?: string[];
+    slug?: string;
+    weight?: string | null;
+    fillPower?: string | null;
+    certifications?: string[];
+    variants?: { label: string; value: string }[];
+  };
+
   useEffect(() => {
     if (product) {
       addRecentlyViewed(id || '');
@@ -79,8 +89,8 @@ export default function ProductDetailPage() {
     );
   }
 
-  const images: string[] = (product as any).images?.length > 0
-    ? (product as any).images
+  const images: string[] = (product as LegacyProduct).images?.length > 0
+    ? (product as LegacyProduct).images!
     : [product.image];
 
   const careTipsZh = [
@@ -99,16 +109,16 @@ export default function ProductDetailPage() {
   ];
 
   const sameCategoryProducts = allProducts
-    ? allProducts.filter(p => p.category === product.category && p.id !== product.id)
+    ? allProducts.filter((p: Product) => p.category === product.category && p.id !== product.id)
     : [];
   const featuredFill = allProducts
-    ? allProducts.filter(p => p.featured && p.id !== product.id && !sameCategoryProducts.find(s => s.id === p.id))
+    ? allProducts.filter((p: Product) => p.featured && p.id !== product.id && !sameCategoryProducts.find(s => s.id === p.id))
     : [];
   const alsoBought = [...sameCategoryProducts, ...featuredFill].slice(0, 3);
 
   const recentIds = recentlyViewed.filter(rid => rid !== id);
   const recentProducts = allProducts
-    ? recentIds.map(rid => allProducts.find(p => p.id === rid)).filter(Boolean).slice(0, 4)
+    ? (recentIds.map(rid => allProducts.find((p: Product) => p.id === rid)).filter(Boolean) as LegacyProduct[]).slice(0, 4)
     : [];
 
   const tabs = [
