@@ -185,7 +185,7 @@ export default function ShopPage() {
               {filtered.map(product => {
                 const outOfStock = product.stock <= 0;
                 return (
-                  <div key={product.id} className={`group bg-card rounded-lg overflow-hidden border border-border hover:border-gold/30 hover:shadow-lg transition-all ${outOfStock ? 'opacity-70' : ''}`}>
+                  <div key={product.id} data-testid="product-card" className={`group bg-card rounded-lg overflow-hidden border border-border hover:border-gold/30 hover:shadow-lg transition-all ${outOfStock ? 'opacity-70' : ''}`}>
                     <Link to={`/product/${product.id}`} className="block">
                       <div className="relative aspect-square overflow-hidden">
                         <img src={product.image} alt={locale === 'zh' ? product.nameZh : product.nameEn} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
@@ -228,6 +228,7 @@ export default function ShopPage() {
                           </button>
                           <button
                             onClick={e => { e.stopPropagation(); handleAddToCart(product); }}
+                            data-testid="add-to-cart"
                             className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${outOfStock ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:bg-gold'}`}
                             disabled={outOfStock}
                           >

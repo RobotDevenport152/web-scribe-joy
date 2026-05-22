@@ -46,7 +46,7 @@ const ChatWidget = () => {
       });
 
       if (error) throw error;
-      const reply = data?.choices?.[0]?.message?.content || data?.content || data?.text || '抱歉，我暂时无法回答，请稍后再试。';
+      const reply = data?.reply ?? '抱歉，我暂时无法回答，请稍后再试。';
       setMessages([...newMsgs, { role: 'assistant', content: reply }]);
     } catch (e: any) {
       console.error('Chat error:', e);

@@ -97,7 +97,7 @@ export default function Navbar() {
           <button onClick={() => setCartOpen(true)} className="relative text-primary-foreground/80 hover:text-primary-foreground transition-colors">
             <ShoppingBag className="w-5 h-5" />
             {cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-body font-semibold">
+              <span data-testid="cart-count" className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-body font-semibold">
                 {cartCount}
               </span>
             )}

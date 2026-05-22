@@ -1,9 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { type Currency, type CartItem, type Product, formatPrice, PROMO_CODES } from '@/lib/store';
-
-// PROMO_CODES is imported from store.ts — single source of truth for the client.
-// The authoritative server-side calculation lives in create-checkout/index.ts.
-// Both copies must stay in sync when promo rules change.
+import React, { useEffect } from 'react';
+import { type Currency, useCartStore } from '@/stores/cartStore';
+import { type Product, type CartItem, formatPrice, PROMO_CODES } from '@/lib/store';
 
 interface CartContextType {
   cart: CartItem[];
@@ -25,142 +22,162 @@ interface CartContextType {
   fp: (amount: number) => string;
 }
 
-const CartContext = createContext<CartContextType | null>(null);
-
-const CART_STORAGE_KEY = 'pa-cart-v1';
-const CURRENCY_STORAGE_KEY = 'pa-currency-v1';
-
-function loadCart(): CartItem[] {
-  try {
-    const stored = localStorage.getItem(CART_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-}
-
-function loadCurrency(): Currency {
-  try {
-    const stored = localStorage.getItem(CURRENCY_STORAGE_KEY) as Currency | null;
-    return stored ?? 'CNY';
-  } catch {
-    return 'CNY';
-  }
-}
-
+// CartProvider runs a one-time migration from the old pa-cart-v1 key
+// (CartContext's localStorage) to pa-cart (cartStore's Zustand-persisted key).
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [cart, setCart] = useState<CartItem[]>(loadCart);
-  const [currency, setCurrencyState] = useState<Currency>(loadCurrency);
-  const [promoCode, setPromoCode] = useState('');
-  const [promoDiscount, setPromoDiscount] = useState(0);
-  const [cartOpen, setCartOpen] = useState(false);
-
-  // P1 FIX: Persist cart to localStorage on every change
   useEffect(() => {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-  }, [cart]);
+    try {
+      const legacyRaw = localStorage.getItem('pa-cart-v1');
+      if (!legacyRaw) return;
+      const legacy: CartItem[] = JSON.parse(legacyRaw);
+      if (!Array.isArray(legacy) || legacy.length === 0) return;
 
-  // Persist currency preference
-  const setCurrency = useCallback((c: Currency) => {
-    setCurrencyState(c);
-    localStorage.setItem(CURRENCY_STORAGE_KEY, c);
-  }, []);
-
-  const addToCart = useCallback((product: Product, variant?: string) => {
-    setCart(prev => {
-      const existing = prev.find(
-        i => i.product.id === product.id && i.variant === variant,
-      );
-      if (existing) {
-        return prev.map(i =>
-          i.product.id === product.id && i.variant === variant
-            ? { ...i, quantity: i.quantity + 1 }
-            : i,
-        );
+      const storeRaw = localStorage.getItem('pa-cart');
+      const storeParsed = storeRaw ? JSON.parse(storeRaw) : null;
+      const storeItems = storeParsed?.state?.items ?? [];
+      if (storeItems.length > 0) {
+        // cartStore already has items — don't clobber
+        localStorage.removeItem('pa-cart-v1');
+        return;
       }
-      return [...prev, { product, quantity: 1, variant }];
-    });
-    setCartOpen(true);
-  }, []);
 
-  // P1 FIX: removeFromCart now requires variant to disambiguate.
-  // The old implementation only matched on productId, silently deleting ALL
-  // variants of a product (e.g. removing duvet-200x230 would also remove duvet-220x240).
-  const removeFromCart = useCallback((productId: string, variant?: string) => {
-    setCart(prev =>
-      prev.filter(
-        i => !(i.product.id === productId && i.variant === variant),
-      ),
-    );
-  }, []);
-
-  // P1 FIX: updateQuantity also matches on variant
-  const updateQuantity = useCallback((productId: string, qty: number, variant?: string) => {
-    if (qty <= 0) {
-      setCart(prev =>
-        prev.filter(i => !(i.product.id === productId && i.variant === variant)),
-      );
-    } else {
-      setCart(prev =>
-        prev.map(i =>
-          i.product.id === productId && i.variant === variant
-            ? { ...i, quantity: qty }
-            : i,
-        ),
-      );
+      // Port legacy items into cartStore format
+      const store = useCartStore.getState();
+      for (const item of legacy) {
+        store.addItem({
+          productId: item.product.id,
+          name: item.product.nameZh,
+          nameEn: item.product.nameEn,
+          price_nzd: item.product.prices.NZD,
+          price_cny: item.product.prices.CNY,
+          price_usd: item.product.prices.USD,
+          size: item.variant ?? '',
+          color: '',
+          image: item.product.image,
+        });
+      }
+      localStorage.removeItem('pa-cart-v1');
+    } catch {
+      // Migration failed — safe to ignore; fresh cart
     }
   }, []);
 
-  const clearCart = useCallback(() => {
-    setCart([]);
-    setPromoCode('');
-    setPromoDiscount(0);
-  }, []);
-
-  const cartTotal = cart.reduce(
-    (sum, item) => sum + item.product.prices[currency] * item.quantity,
-    0,
-  );
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-  const applyPromo = useCallback(
-    (code: string) => {
-      const promo = PROMO_CODES[code.toUpperCase()];
-      if (!promo) return false;
-      if (promo.minAmount && cartTotal < promo.minAmount) return false;
-      const discount =
-        promo.type === 'percent'
-          ? parseFloat((cartTotal * promo.discount / 100).toFixed(2))
-          : promo.discount;
-      setPromoDiscount(discount);
-      setPromoCode(code.toUpperCase());
-      return true;
-    },
-    [cartTotal],
-  );
-
-  const fp = useCallback(
-    (amount: number) => formatPrice(amount, currency),
-    [currency],
-  );
-
-  return (
-    <CartContext.Provider
-      value={{
-        cart, addToCart, removeFromCart, updateQuantity, clearCart,
-        cartTotal, cartCount,
-        promoCode, setPromoCode, promoDiscount, setPromoDiscount, applyPromo,
-        cartOpen, setCartOpen,
-        currency, setCurrency, fp,
-      }}
-    >
-      {children}
-    </CartContext.Provider>
-  );
+  return <>{children}</>;
 }
 
-export function useCart() {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error('useCart must be used within CartProvider');
-  return ctx;
+// useCart is a thin adapter: reads from cartStore and presents the legacy
+// CartContext interface so existing consumers (Checkout, CartDrawer, etc.)
+// need no changes.
+export function useCart(): CartContextType {
+  const {
+    items,
+    currency,
+    promoCode: storePromoCode,
+    discount,
+    isOpen,
+    addItem,
+    removeItem,
+    updateQuantity: storeUpdateQty,
+    setCurrency,
+    setPromoCode: storeSetPromoCode,
+    clearCart,
+    setCartOpen,
+    totalItems,
+  } = useCartStore();
+
+  // Reconstruct CartContext's Product-typed items from the flat cartStore schema.
+  // Fields not stored in cartStore (descEn/Zh, variants, etc.) get safe defaults
+  // since Checkout.tsx and CartDrawer.tsx only need id, names, prices, and image.
+  const cart: CartItem[] = items.map(item => ({
+    product: {
+      id: item.productId,
+      nameEn: item.nameEn,
+      nameZh: item.name,
+      descEn: '',
+      descZh: '',
+      category: 'bedding' as const,
+      prices: { NZD: item.price_nzd, CNY: item.price_cny, USD: item.price_usd },
+      image: item.image,
+      stock: 1,
+      featured: false,
+    } as Product,
+    quantity: item.quantity,
+    variant: item.size || undefined,
+  }));
+
+  // cartTotal is in the display currency (matches original CartContext behaviour
+  // where each item's price was fetched in the current currency).
+  const priceForCurrency = (item: typeof items[0]) =>
+    currency === 'CNY' ? item.price_cny
+    : currency === 'USD' ? item.price_usd
+    : item.price_nzd;
+
+  const cartTotal = items.reduce(
+    (sum, item) => sum + priceForCurrency(item) * item.quantity,
+    0,
+  );
+  const cartCount = totalItems();
+
+  // promoDiscount in display currency (percent applies to cartTotal which is
+  // already in display currency; fixed uses the raw NZD amount as the original did)
+  const promoDiscount = !discount ? 0
+    : discount.type === 'percent'
+    ? parseFloat((cartTotal * discount.value / 100).toFixed(2))
+    : discount.amountNZD;
+
+  const promoCode = storePromoCode ?? '';
+
+  const fp = (amount: number) => formatPrice(amount, currency);
+
+  const addToCart = (product: Product, variant?: string) => {
+    addItem({
+      productId: product.id,
+      name: product.nameZh,
+      nameEn: product.nameEn,
+      price_nzd: product.prices.NZD,
+      price_cny: product.prices.CNY,
+      price_usd: product.prices.USD,
+      size: variant ?? '',
+      color: '',
+      image: product.image,
+    });
+    setCartOpen(true);
+  };
+
+  const removeFromCart = (productId: string, variant?: string) =>
+    removeItem(productId, variant ?? '');
+
+  const updateQuantity = (productId: string, qty: number, variant?: string) =>
+    storeUpdateQty(productId, variant ?? '', qty);
+
+  const applyPromo = (code: string): boolean => {
+    const promo = PROMO_CODES[code.toUpperCase()];
+    if (!promo) return false;
+    if (promo.minAmount && cartTotal < promo.minAmount) return false;
+    const discountObj = promo.type === 'percent'
+      ? { type: 'percent' as const, value: promo.discount }
+      : { type: 'fixed' as const, amountNZD: promo.discount };
+    storeSetPromoCode(code.toUpperCase(), discountObj);
+    return true;
+  };
+
+  const setPromoCode = (code: string) => {
+    if (!code) storeSetPromoCode(null, null);
+    // Setting a code string without a discount value is only used to clear;
+    // actual application goes through applyPromo.
+  };
+
+  const setPromoDiscount = (_d: number) => {
+    // No-op: discount is managed through applyPromo/setPromoCode.
+    // Kept for API compatibility with components that call setPromoDiscount(0).
+  };
+
+  return {
+    cart, addToCart, removeFromCart, updateQuantity, clearCart,
+    cartTotal, cartCount,
+    promoCode, setPromoCode, promoDiscount, setPromoDiscount, applyPromo,
+    cartOpen: isOpen, setCartOpen,
+    currency, setCurrency,
+    fp,
+  };
 }

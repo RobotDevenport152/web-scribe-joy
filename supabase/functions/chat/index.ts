@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,56 +15,107 @@ const SYSTEM_PROMPT = `你是太平洋羊驼（Pacific Alpacas）的专业客服
 回答风格：专业但亲切，优先中文，回答简洁（200字以内）。
 不确定的内容：引导用户联系微信客服或发邮件至 info@pacificalpacas.com`;
 
+// Simple in-memory rate limiter for anonymous users.
+// Resets on cold start; good enough as a lightweight safeguard.
+const anonRequests = new Map<string, { count: number; resetAt: number }>();
+const ANON_MAX = 10;
+const ANON_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+
+function checkAnonRate(ip: string): boolean {
+  const now = Date.now();
+  const rec = anonRequests.get(ip);
+  if (!rec || now > rec.resetAt) {
+    anonRequests.set(ip, { count: 1, resetAt: now + ANON_WINDOW_MS });
+    return true;
+  }
+  if (rec.count >= ANON_MAX) return false;
+  rec.count++;
+  return true;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  try {
-    const { messages } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          ...messages,
-        ],
-        max_tokens: 500,
-      }),
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
+  try {
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
+    if (!GEMINI_API_KEY) {
+      console.error("[chat] GEMINI_API_KEY not configured");
+      return json({ error: "AI service is not configured." }, 500);
+    }
+
+    // Determine auth status — authenticated users get full token budget;
+    // anonymous users are rate-limited and get a shorter response.
+    const authHeader = req.headers.get("Authorization");
+    let isAuthenticated = false;
+    if (authHeader) {
+      const supabaseClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      );
+      const { data } = await supabaseClient.auth.getUser(
+        authHeader.replace("Bearer ", ""),
+      );
+      isAuthenticated = !!data?.user;
+    }
+
+    if (!isAuthenticated) {
+      const ip =
+        req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+      if (!checkAnonRate(ip)) {
+        return json(
+          { reply: "请求过于频繁，请稍后再试。" },
+          429,
+        );
+      }
+    }
+
+    const { messages } = await req.json();
+
+    const fullPrompt =
+      SYSTEM_PROMPT +
+      "\n\n对话历史：\n" +
+      messages
+        .map((m: { role: string; content: string }) => `${m.role === "user" ? "用户" : "助手"}: ${m.content}`)
+        .join("\n");
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: fullPrompt }] }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: isAuthenticated ? 1000 : 300,
+          },
+        }),
+      },
+    );
+
     if (!response.ok) {
+      const errText = await response.text();
+      console.error("[chat] Gemini API error:", response.status, errText);
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "请求过于频繁，请稍后再试。" }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json({ reply: "请求过于频繁，请稍后再试。" }, 429);
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI 额度已用完。" }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI 服务暂不可用" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ reply: "AI 服务暂不可用，请稍后重试或联系微信客服。" }, 500);
     }
 
     const data = await response.json();
-    return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const reply =
+      data.candidates?.[0]?.content?.parts?.[0]?.text ??
+      "抱歉，我暂时无法回答，请稍后再试或联系微信客服。";
+
+    return json({ reply });
   } catch (e) {
-    console.error("chat error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("[chat] error:", e);
+    return json({ reply: "网络异常，请稍后重试或联系微信客服。" }, 500);
   }
 });

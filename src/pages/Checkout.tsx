@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/hooks/useAuth';
+import { useCartStore } from '@/stores/cartStore';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
 import { motion } from 'framer-motion';
@@ -14,8 +15,26 @@ import { checkoutSchema, type CheckoutFormData } from '@/lib/schemas';
 type Step = 'info' | 'payment' | 'confirm';
 
 export default function CheckoutPage() {
-  const { locale, cart, fp, cartTotal, promoDiscount, promoCode, currency, t } = useApp();
-  const { user } = useAuth();
+  const { locale, fp, promoDiscount, promoCode, t } = useApp();
+  const { user, loading: authLoading } = useAuth();
+  // Read cart and currency from cartStore so the checkout always reflects what's
+  // in the cart drawer (unified source of truth after the dual-cart merge).
+  const { items, currency } = useCartStore();
+  const cart = items.map(item => ({
+    product: {
+      id: item.productId,
+      nameZh: item.name,
+      nameEn: item.nameEn,
+      prices: { NZD: item.price_nzd, CNY: item.price_cny, USD: item.price_usd } as Record<import('@/lib/store').Currency, number>,
+      image: item.image,
+    },
+    quantity: item.quantity,
+    variant: item.size || undefined,
+  }));
+  const cartTotal = items.reduce(
+    (sum, item) => sum + (currency === 'CNY' ? item.price_cny : currency === 'USD' ? item.price_usd : item.price_nzd) * item.quantity,
+    0,
+  );
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>('info');
   const [submitting, setSubmitting] = useState(false);
@@ -114,6 +133,27 @@ export default function CheckoutPage() {
       setSubmitting(false);
     }
   });
+
+  // Show skeleton while auth state resolves (prevents blank screen flash)
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-24 pb-16">
+          <div className="container mx-auto px-6 max-w-5xl space-y-6 animate-pulse">
+            <div className="h-8 bg-muted rounded w-48 mx-auto" />
+            <div className="h-4 bg-muted rounded w-64 mx-auto" />
+            <div className="grid lg:grid-cols-3 gap-8 mt-8">
+              <div className="lg:col-span-2 space-y-4">
+                {[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-muted rounded" />)}
+              </div>
+              <div className="h-48 bg-muted rounded" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (cart.length === 0) {
     return (
